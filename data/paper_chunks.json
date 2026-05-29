@@ -1,0 +1,832 @@
+[
+  {
+    "id": 100001,
+    "doi": "10.1085/jgp.201711882",
+    "title": "Voltage-Gated Sodium Channel Gating and the Molecular Basis of Action Potential Initiation",
+    "authors": "Catterall, W. A.; Wisedchaisri, G.; Zheng, N.",
+    "year": 2017,
+    "chunk_index": 0,
+    "text": "Voltage-gated sodium channels initiate action potentials by opening rapidly in response to membrane depolarisation, producing an inward sodium current that drives further depolarisation in a regenerative cycle. Structural studies reveal that activation involves outward movement of the S4 voltage-sensing helices, which rotates to open the intracellular gate. Inactivation follows within milliseconds as the intracellular linker between domains III and IV occludes the open pore, terminating sodium influx and enabling repolarisation.",
+    "taxonomy_node_ids": ["RA001", "T001"]
+  },
+  {
+    "id": 100002,
+    "doi": "10.1085/jgp.201711882",
+    "title": "Voltage-Gated Sodium Channel Gating and the Molecular Basis of Action Potential Initiation",
+    "authors": "Catterall, W. A.; Wisedchaisri, G.; Zheng, N.",
+    "year": 2017,
+    "chunk_index": 2,
+    "text": "The Hodgkin-Huxley model predicts that action potential propagation velocity scales with axon diameter because larger axons have lower axial resistance. In myelinated axons, propagation is further accelerated by saltatory conduction: the action potential jumps between nodes of Ranvier where sodium channels are clustered at high density, leaving the internodal regions — insulated by myelin — to function as passive cables. This arrangement reduces the metabolic cost of repolarisation while increasing conduction velocity by up to 50-fold relative to unmyelinated fibres of the same diameter.",
+    "taxonomy_node_ids": ["RA002", "RA003"]
+  },
+  {
+    "id": 200001,
+    "doi": "10.1016/j.neuron.2013.10.022",
+    "title": "Molecular Mechanisms of Neurotransmitter Release at the Presynaptic Active Zone",
+    "authors": "Sudhof, T. C.",
+    "year": 2013,
+    "chunk_index": 0,
+    "text": "Synaptic vesicle fusion is triggered by the influx of calcium through voltage-gated calcium channels clustered at the active zone. Calcium binds to synaptotagmin-1, which releases its inhibitory clamp on the SNARE complex — formed by synaptobrevin on the vesicle membrane and syntaxin-1 and SNAP-25 on the target membrane — allowing the complex to zipperclose and drive membrane fusion within less than a millisecond. Release probability at a given synapse is therefore strongly determined by the distance between calcium channels and the vesicle docking site.",
+    "taxonomy_node_ids": ["RA004", "D009"]
+  },
+  {
+    "id": 200002,
+    "doi": "10.1016/j.neuron.2013.10.022",
+    "title": "Molecular Mechanisms of Neurotransmitter Release at the Presynaptic Active Zone",
+    "authors": "Sudhof, T. C.",
+    "year": 2013,
+    "chunk_index": 1,
+    "text": "Following exocytosis, neurotransmitter rapidly diffuses across the 20 nm synaptic cleft and binds postsynaptic receptors. Clearance from the cleft is achieved primarily by transporter-mediated reuptake into presynaptic terminals and perisynaptic astrocytes, limiting receptor activation duration and preventing spillover to neighbouring synapses. The kinetics of reuptake are a principal determinant of the time course of the postsynaptic current and of short-term synaptic depression at high firing frequencies.",
+    "taxonomy_node_ids": ["RA005", "RA006"]
+  },
+  {
+    "id": 300001,
+    "doi": "10.1016/j.neuron.2016.09.038",
+    "title": "Dendritic Computation: Active Conductances and Nonlinear Integration in Pyramidal Neurons",
+    "authors": "Larkum, M. E.; Nevian, T.",
+    "year": 2016,
+    "chunk_index": 0,
+    "text": "Dendrites are not passive cables. Voltage-gated sodium, calcium, and potassium channels distributed across the dendritic tree support local regenerative events — dendritic spikes — that amplify synaptic inputs and enable nonlinear integration. A single dendritic branch can perform an AND-NOT logical operation: inputs arriving within a brief time window at the same branch summate supralinearly, while inputs spread across multiple branches summate sublinearly. This compartmentalisation substantially increases the computational capacity of individual neurons beyond what is achievable with passive summation alone.",
+    "taxonomy_node_ids": ["RA009", "SP003"]
+  },
+  {
+    "id": 300002,
+    "doi": "10.1016/j.neuron.2016.09.038",
+    "title": "Dendritic Computation: Active Conductances and Nonlinear Integration in Pyramidal Neurons",
+    "authors": "Larkum, M. E.; Nevian, T.",
+    "year": 2016,
+    "chunk_index": 1,
+    "text": "Temporal summation depends on the membrane time constant: inputs arriving within a window set by the RC time constant of the membrane will sum, while those arriving outside this window will not reach threshold independently. Spatial summation requires coincident activation of inputs across dendritic branches, and its effectiveness is shaped by dendritic geometry and active conductance distribution. Together, temporal and spatial summation define the conditions under which a neuron integrates its inputs to generate output spikes.",
+    "taxonomy_node_ids": ["RA007", "RA008"]
+  },
+  {
+    "id": 400001,
+    "doi": "10.1523/JNEUROSCI.4993-08.2009",
+    "title": "Centre-Surround Organisation of Retinal Ganglion Cell Receptive Fields",
+    "authors": "Demb, J. B.; Singer, J. H.",
+    "year": 2009,
+    "chunk_index": 0,
+    "text": "Retinal ganglion cells encode visual contrast rather than absolute luminance through centre-surround receptive field organisation. ON-centre cells depolarise when light falls in the receptive field centre and hyperpolarise when light fills the surround; OFF-centre cells show the reverse polarity. This antagonistic organisation arises from direct bipolar cell input to the centre and inhibitory horizontal cell-mediated input to the surround, and is the principal mechanism by which the retina maximises information transmission about spatial luminance gradients.",
+    "taxonomy_node_ids": ["RA010", "T008"]
+  },
+  {
+    "id": 400002,
+    "doi": "10.1523/JNEUROSCI.4993-08.2009",
+    "title": "Centre-Surround Organisation of Retinal Ganglion Cell Receptive Fields",
+    "authors": "Demb, J. B.; Singer, J. H.",
+    "year": 2009,
+    "chunk_index": 1,
+    "text": "The principle of lateral inhibition that generates centre-surround antagonism in the retina is conserved throughout the visual hierarchy. In primary visual cortex, inhibitory interneurons sharpen the orientation tuning of pyramidal cells by suppressing responses to stimuli outside the preferred orientation band. The result is a sparser, more selective representation of visual features at each processing stage, consistent with the goal of efficient coding of natural image statistics.",
+    "taxonomy_node_ids": ["RA011", "T008"]
+  },
+  {
+    "id": 500001,
+    "doi": "10.1038/nrn.2017.141",
+    "title": "Orientation Selectivity and the Development of Primary Visual Cortex",
+    "authors": "Priebe, N. J.; Ferster, D.",
+    "year": 2017,
+    "chunk_index": 0,
+    "text": "Neurons in primary visual cortex (V1) respond selectively to oriented edges, with individual cells firing maximally to one preferred orientation and falling silent for the orthogonal orientation. This selectivity emerges from the elongated arrangement of thalamic inputs onto cortical neurons combined with intracortical inhibition. Simple cells — which show spatially separated ON and OFF subregions — have sharp orientation tuning determined primarily by thalamic feed-forward input, while complex cells integrate across subregions via intracortical circuits.",
+    "taxonomy_node_ids": ["RA011", "T006"]
+  },
+  {
+    "id": 500002,
+    "doi": "10.1038/nrn.2017.141",
+    "title": "Orientation Selectivity and the Development of Primary Visual Cortex",
+    "authors": "Priebe, N. J.; Ferster, D.",
+    "year": 2017,
+    "chunk_index": 1,
+    "text": "Orientation selectivity in V1 is refined during a postnatal critical period by visual experience. Monocular deprivation during this window shifts ocular dominance toward the open eye and reduces orientation selectivity in the deprived eye's cortical columns — effects that are largely irreversible after the critical period closes. The closure is gated by the maturation of parvalbumin interneurons and consolidation of extracellular matrix perineuronal nets, consistent with Critical Period Theory's account of experience-dependent cortical map formation.",
+    "taxonomy_node_ids": ["RA011", "T006"]
+  },
+  {
+    "id": 600001,
+    "doi": "10.1016/j.neuron.2019.09.004",
+    "title": "Hierarchical Processing in the Ventral Visual Stream",
+    "authors": "DiCarlo, J. J.; Zoccolan, D.; Rust, N. C.",
+    "year": 2019,
+    "chunk_index": 0,
+    "text": "Object recognition in primate visual cortex proceeds through a hierarchy of cortical areas — V1, V2, V4, and inferotemporal cortex (IT) — in which each stage combines the outputs of the previous stage to represent increasingly complex and invariant features. Neurons in V1 respond to oriented edges at specific locations; neurons in IT respond to whole objects regardless of position, size, or viewpoint. The transformation from local features to viewpoint-invariant representations occurs through a cascade of nonlinear pooling operations implemented by excitatory and inhibitory circuits at each stage.",
+    "taxonomy_node_ids": ["RA012", "T010"]
+  },
+  {
+    "id": 600002,
+    "doi": "10.1016/j.neuron.2019.09.004",
+    "title": "Hierarchical Processing in the Ventral Visual Stream",
+    "authors": "DiCarlo, J. J.; Zoccolan, D.; Rust, N. C.",
+    "year": 2019,
+    "chunk_index": 1,
+    "text": "Predictive coding models of the ventral stream propose that higher areas send top-down predictions to lower areas, which return only the residual prediction error. Under this account, the ventral stream does not perform a simple feed-forward feature extraction but an iterative inference that converges on the most probable object identity. Evidence for top-down predictions comes from the suppression of V1 responses to expected versus unexpected stimuli, and from the enhancement of IT responses during figure-ground segmentation driven by feedback from higher areas.",
+    "taxonomy_node_ids": ["RA012", "T010"]
+  },
+  {
+    "id": 700001,
+    "doi": "10.1016/j.neuron.2018.03.044",
+    "title": "Mechanoelectrical Transduction in Cochlear Hair Cells",
+    "authors": "Fettiplace, R.",
+    "year": 2018,
+    "chunk_index": 0,
+    "text": "Sound-induced vibration of the basilar membrane deflects the stereocilia bundles of inner hair cells, stretching tip links between adjacent stereocilia and mechanically opening MET channels at their upper insertions. Potassium and calcium ions flow inward through these channels down a large electrochemical gradient maintained by the endocochlear potential, depolarising the hair cell and triggering glutamate release at ribbon synapses onto auditory nerve fibres. The entire transduction process from mechanical stimulus to afferent spike can occur within 50 microseconds.",
+    "taxonomy_node_ids": ["RA013", "SP005"]
+  },
+  {
+    "id": 700002,
+    "doi": "10.1016/j.neuron.2018.03.044",
+    "title": "Mechanoelectrical Transduction in Cochlear Hair Cells",
+    "authors": "Fettiplace, R.",
+    "year": 2018,
+    "chunk_index": 1,
+    "text": "The cochlea performs a mechanical frequency analysis: the basilar membrane is narrow and stiff at the base, responding best to high frequencies, and wide and compliant at the apex, responding best to low frequencies. This graded mechanical tuning creates a place code in which each auditory nerve fibre has a characteristic frequency corresponding to its cochlear location. The tonotopic organisation established at the cochlea is preserved at every relay station of the ascending auditory pathway, including the superior olive, inferior colliculus, medial geniculate body, and primary auditory cortex.",
+    "taxonomy_node_ids": ["RA014", "RA013"]
+  },
+  {
+    "id": 800001,
+    "doi": "10.1152/jn.00483.2015",
+    "title": "Organisation and Function of the Corticospinal Tract in Voluntary Movement",
+    "authors": "Lemon, R. N.",
+    "year": 2015,
+    "chunk_index": 0,
+    "text": "The corticospinal tract carries the principal descending motor command from primary motor cortex and premotor areas to spinal motor neurons. In primates, direct monosynaptic corticomotoneuronal connections to distal limb motor neurons are the substrate for independent finger movements — a capacity absent in non-primate mammals. The density of these direct connections scales with manual dexterity across primate species, establishing the corticospinal tract as the critical pathway for fine voluntary motor control.",
+    "taxonomy_node_ids": ["RA020", "SP007"]
+  },
+  {
+    "id": 800002,
+    "doi": "10.1152/jn.00483.2015",
+    "title": "Organisation and Function of the Corticospinal Tract in Voluntary Movement",
+    "authors": "Lemon, R. N.",
+    "year": 2015,
+    "chunk_index": 1,
+    "text": "Neurons in primary motor cortex are arranged in a somatotopic map — the motor homunculus — in which the representation of body parts is not proportional to their physical size but to the precision required for their voluntary control. Hand and face occupy disproportionately large territories. Individual M1 neurons are broadly tuned for movement direction, and population vector theory demonstrates that intended movement direction can be decoded from the weighted average of preferred-direction vectors across the active population.",
+    "taxonomy_node_ids": ["RA019", "RA021"]
+  },
+  {
+    "id": 900001,
+    "doi": "10.1038/nrn.2016.31",
+    "title": "The Basal Ganglia: Circuit Architecture and Action Selection",
+    "authors": "Freeze, B. S.; Kravitz, A. V.; Hammack, N.; Bhatt, D. L.",
+    "year": 2016,
+    "chunk_index": 0,
+    "text": "The basal ganglia implement action selection through opponent direct and indirect pathways. Activation of direct pathway striatal neurons (expressing D1 receptors) disinhibits thalamus via the internal globus pallidus, facilitating the selected action. Activation of indirect pathway neurons (expressing D2 receptors) increases pallidal inhibition of thalamus, suppressing competing actions. This push-pull architecture allows the basal ganglia to simultaneously promote one motor programme and suppress alternatives.",
+    "taxonomy_node_ids": ["RA022", "SP008"]
+  },
+  {
+    "id": 900002,
+    "doi": "10.1038/nrn.2016.31",
+    "title": "The Basal Ganglia: Circuit Architecture and Action Selection",
+    "authors": "Freeze, B. S.; Kravitz, A. V.; Hammack, N.; Bhatt, D. L.",
+    "year": 2016,
+    "chunk_index": 1,
+    "text": "Basal ganglia output reaches motor cortex through the motor thalamus, forming closed cortico-striato-thalamo-cortical loops. Dopaminergic input from the substantia nigra pars compacta modulates direct and indirect pathway activity in opposite directions — D1 activation facilitates the direct pathway while D2 activation suppresses the indirect pathway — providing a mechanism by which reward signals bias action selection toward rewarded behaviours.",
+    "taxonomy_node_ids": ["RA024", "RA045"]
+  },
+  {
+    "id": 1000001,
+    "doi": "10.1016/j.neuron.2011.05.001",
+    "title": "Cerebellar Learning and Error Correction via Climbing Fibre Signals",
+    "authors": "De Zeeuw, C. I.; Hoebeek, F. E.; Bosman, L. W.",
+    "year": 2011,
+    "chunk_index": 0,
+    "text": "The cerebellum refines motor output through a supervised learning mechanism in which climbing fibres from the inferior olive carry error signals that modify the synaptic weights of parallel fibre inputs onto Purkinje cells. When a movement produces an unexpected outcome, climbing fibre activity induces long-term depression at active parallel fibre-Purkinje cell synapses, reducing the contribution of those inputs to subsequent movement commands. Over many repetitions, this error-driven plasticity aligns the cerebellar forward model with the actual motor plant.",
+    "taxonomy_node_ids": ["RA023", "RA026"]
+  },
+  {
+    "id": 1000002,
+    "doi": "10.1016/j.neuron.2011.05.001",
+    "title": "Cerebellar Learning and Error Correction via Climbing Fibre Signals",
+    "authors": "De Zeeuw, C. I.; Hoebeek, F. E.; Bosman, L. W.",
+    "year": 2011,
+    "chunk_index": 1,
+    "text": "Cerebellar output reaches the motor cortex via the dentate nucleus and the ventrolateral thalamus, forming a second major cortico-subcortical loop alongside the basal ganglia-thalamocortical circuit. While the basal ganglia are implicated in action selection and reinforcement, the cerebellum specialises in the precise timing and coordination of movement — deficits in cerebellar function produce ataxia, dysmetria, and impaired timing of conditioned reflexes rather than loss of movement initiation.",
+    "taxonomy_node_ids": ["RA023", "RA024"]
+  },
+  {
+    "id": 1100001,
+    "doi": "10.1038/s41583-022-00612-0",
+    "title": "NMDA Receptor-Dependent Long-Term Potentiation: Mechanisms and Significance",
+    "authors": "Nicoll, R. A.",
+    "year": 2022,
+    "chunk_index": 0,
+    "text": "Long-term potentiation (LTP) at excitatory synapses requires activation of NMDA receptors, which act as coincidence detectors: they open only when glutamate is present and the postsynaptic membrane is already depolarised, simultaneously relieving the voltage-dependent magnesium block. Calcium entry through open NMDA receptors activates CaMKII and other downstream kinases, triggering the insertion of additional AMPA receptors into the postsynaptic density, which increases synaptic strength persistently.",
+    "taxonomy_node_ids": ["RA025", "RA042"]
+  },
+  {
+    "id": 1100002,
+    "doi": "10.1038/s41583-022-00612-0",
+    "title": "NMDA Receptor-Dependent Long-Term Potentiation: Mechanisms and Significance",
+    "authors": "Nicoll, R. A.",
+    "year": 2022,
+    "chunk_index": 1,
+    "text": "Long-term depression (LTD) is induced by low-frequency synaptic stimulation or by uncorrelated pre- and postsynaptic activity, and is expressed by removal of AMPA receptors from the synapse via internalisation. The bidirectionality of plasticity — LTP strengthening and LTD weakening the same synapse — allows the synapse to both increase and decrease its strength, providing the dynamic range required for information storage. The threshold between LTP and LTD induction is set by prior synaptic history, implementing a metaplasticity mechanism.",
+    "taxonomy_node_ids": ["RA026", "RA041"]
+  },
+  {
+    "id": 1200001,
+    "doi": "10.1038/nrn2332",
+    "title": "Spike-Timing-Dependent Plasticity: From Synapse to Perception",
+    "authors": "Caporale, N.; Dan, Y.",
+    "year": 2008,
+    "chunk_index": 0,
+    "text": "Spike-timing-dependent plasticity (STDP) is a temporally asymmetric learning rule: a synapse strengthens (LTP) when the presynaptic spike precedes the postsynaptic spike within approximately 20 ms, and weakens (LTD) when the order is reversed. This asymmetry means that STDP potentiates synapses whose activation reliably predicts postsynaptic firing, providing a biologically plausible implementation of Hebbian learning with a causal structure sensitive to temporal order.",
+    "taxonomy_node_ids": ["RA027", "T002"]
+  },
+  {
+    "id": 1200002,
+    "doi": "10.1038/nrn2332",
+    "title": "Spike-Timing-Dependent Plasticity: From Synapse to Perception",
+    "authors": "Caporale, N.; Dan, Y.",
+    "year": 2008,
+    "chunk_index": 1,
+    "text": "The STDP window has important implications for neural coding: it predicts that synapses will be strengthened by inputs that arrive slightly before postsynaptic firing — precisely the condition under which they contributed to the spike. STDP thus implements a form of credit assignment at the single-synapse level. When combined with a neuromodulatory eligibility signal — as in the three-factor learning rule — STDP can support reinforcement learning by gating plasticity at synapses that were recently active when a reward signal arrives.",
+    "taxonomy_node_ids": ["RA027", "T009"]
+  },
+  {
+    "id": 1300001,
+    "doi": "10.1016/j.neuron.2013.09.004",
+    "title": "Synaptic Scaling: A Homeostatic Mechanism for Stabilising Network Activity",
+    "authors": "Turrigiano, G. G.",
+    "year": 2013,
+    "chunk_index": 0,
+    "text": "Synaptic scaling is a homeostatic plasticity mechanism that stabilises neuronal firing rates by adjusting the strength of all excitatory synapses on a neuron up or down in proportion to a common scaling factor. When activity is chronically suppressed, neurons increase the surface expression of GluA1-containing AMPA receptors at all synapses, increasing their amplitude multiplicatively. When activity is chronically elevated, the reverse occurs. This global adjustment preserves the relative differences in synaptic strength established by Hebbian plasticity while shifting the neuron's average firing rate back toward its target level.",
+    "taxonomy_node_ids": ["RA028", "SP010"]
+  },
+  {
+    "id": 1300002,
+    "doi": "10.1016/j.neuron.2013.09.004",
+    "title": "Synaptic Scaling: A Homeostatic Mechanism for Stabilising Network Activity",
+    "authors": "Turrigiano, G. G.",
+    "year": 2013,
+    "chunk_index": 1,
+    "text": "Intrinsic excitability regulation is a complementary homeostatic mechanism in which neurons adjust the density and kinetics of their voltage-gated channels to return firing rates to a target range. Unlike synaptic scaling, which affects all inputs equally, intrinsic regulation shifts the neuron's entire input-output curve without altering relative synaptic weights. Together, synaptic scaling and intrinsic regulation operate over timescales of hours to days to maintain network stability in the face of the destabilising tendencies of Hebbian plasticity.",
+    "taxonomy_node_ids": ["RA029", "RA028"]
+  },
+  {
+    "id": 1400001,
+    "doi": "10.1126/science.1077395",
+    "title": "Gamma Oscillations in Cortical Networks and the Binding Problem",
+    "authors": "Buzsaki, G.; Draguhn, A.",
+    "year": 2004,
+    "chunk_index": 0,
+    "text": "Gamma-band oscillations (30–80 Hz) arise from reciprocal interactions between fast-spiking parvalbumin-expressing interneurons and pyramidal cells. The interneurons fire reliably at gamma frequency, generating periodic inhibitory postsynaptic potentials in pyramidal cells that create a narrow window within each cycle in which excitatory drive can evoke a spike. Stimuli that drive sufficient excitation to overcome inhibition on the same cycle produce synchronised firing across neurons, while weaker or out-of-phase inputs are suppressed, implementing a winner-take-all selection mechanism.",
+    "taxonomy_node_ids": ["RA032", "RA038"]
+  },
+  {
+    "id": 1400002,
+    "doi": "10.1126/science.1077395",
+    "title": "Gamma Oscillations in Cortical Networks and the Binding Problem",
+    "authors": "Buzsaki, G.; Draguhn, A.",
+    "year": 2004,
+    "chunk_index": 1,
+    "text": "The binding-by-synchrony hypothesis proposes that features of the same perceptual object, encoded in spatially distributed neurons, are bound into a unified representation by synchronised gamma-band firing. Neurons representing features of the same object fire within the same gamma cycle, while neurons representing different objects fire in different cycles, creating a temporal code for object identity superimposed on the spatial code for feature identity. Experimental evidence from visual cortex shows increased gamma synchronisation between neurons with overlapping receptive fields stimulated by the same moving bar compared to two separate bars.",
+    "taxonomy_node_ids": ["RA032", "T005"]
+  },
+  {
+    "id": 1500001,
+    "doi": "10.1126/science.1058330",
+    "title": "Theta Oscillations in Hippocampus and the Organisation of Sequential Activity",
+    "authors": "O'Keefe, J.; Recce, M. L.",
+    "year": 2001,
+    "chunk_index": 0,
+    "text": "Hippocampal theta oscillations (4–12 Hz) occur during locomotion and exploratory behaviour and organise the firing of place cells — neurons with spatially selective firing fields — into sequential activity patterns. As an animal traverses a place field, the cell's spikes advance progressively to earlier phases of the theta cycle, a phenomenon known as theta phase precession. This means that the temporal sequence of spikes within a theta cycle encodes the spatial sequence of locations the animal will traverse, providing a temporal code for spatial order.",
+    "taxonomy_node_ids": ["RA033", "T004"]
+  },
+  {
+    "id": 1500002,
+    "doi": "10.1126/science.1058330",
+    "title": "Theta Oscillations in Hippocampus and the Organisation of Sequential Activity",
+    "authors": "O'Keefe, J.; Recce, M. L.",
+    "year": 2001,
+    "chunk_index": 1,
+    "text": "During slow-wave sleep, hippocampal theta gives way to sharp-wave ripples — brief bursts of high-frequency oscillations (100–200 Hz) superimposed on a sharp positive deflection in the local field potential. During ripples, previously active ensembles of place cells replay their waking sequence of activation in compressed time, providing a mechanism for transferring episodic spatial memories to neocortical long-term storage. Disrupting sharp-wave ripples during post-learning sleep impairs subsequent spatial memory performance.",
+    "taxonomy_node_ids": ["RA034", "RA033"]
+  },
+  {
+    "id": 1600001,
+    "doi": "10.1016/j.neuron.2015.09.001",
+    "title": "Cortical Lamination: Cell Types, Connectivity and Canonical Circuits",
+    "authors": "Harris, K. D.; Shepherd, G. M. G.",
+    "year": 2015,
+    "chunk_index": 0,
+    "text": "The neocortex is organised into six layers distinguished by cell type, density, and connectivity. Layer 4 receives the primary thalamic input and projects to layers 2/3, which in turn project to layer 5, the principal output layer for subcortical targets including the spinal cord and basal ganglia. Layer 6 provides a feedback projection back to thalamus. This laminar organisation defines a canonical cortical circuit in which thalamic input drives local excitation, which is modulated by inhibitory interneurons in all layers, before being relayed to output neurons.",
+    "taxonomy_node_ids": ["RA035", "SP013"]
+  },
+  {
+    "id": 1600002,
+    "doi": "10.1016/j.neuron.2015.09.001",
+    "title": "Cortical Lamination: Cell Types, Connectivity and Canonical Circuits",
+    "authors": "Harris, K. D.; Shepherd, G. M. G.",
+    "year": 2015,
+    "chunk_index": 1,
+    "text": "Sensory cortical areas contain a topographic map of the receptor surface that is maintained throughout the laminar column. In visual cortex, neurons in all layers have receptive fields at the same retinotopic location but may differ in size and selectivity. Orientation columns — vertical modules sharing a common preferred orientation — tile the cortical surface in a pinwheel arrangement, with the full range of orientations represented within each cortical hypercolumn. This columnar organisation is a recurring architectural principle across sensory cortices.",
+    "taxonomy_node_ids": ["RA036", "RA037"]
+  },
+  {
+    "id": 1700001,
+    "doi": "10.1038/nrn3265",
+    "title": "Interneuron Diversity and the Logic of Cortical Inhibition",
+    "authors": "Kepecs, A.; Fishell, G.",
+    "year": 2014,
+    "chunk_index": 0,
+    "text": "Cortical GABAergic interneurons are classified into three largely non-overlapping groups based on the expression of parvalbumin (PV), somatostatin (SST), or vasoactive intestinal peptide (VIP). PV interneurons — fast-spiking cells that target the soma and axon initial segment — provide powerful perisomatic inhibition and drive gamma oscillations. SST interneurons target distal dendrites and mediate lateral inhibition between pyramidal neurons. VIP interneurons preferentially inhibit SST interneurons, implementing a disinhibitory circuit that releases pyramidal cells from dendritic inhibition during states of heightened attention or arousal.",
+    "taxonomy_node_ids": ["RA038", "SP014"]
+  },
+  {
+    "id": 1700002,
+    "doi": "10.1038/nrn3265",
+    "title": "Interneuron Diversity and the Logic of Cortical Inhibition",
+    "authors": "Kepecs, A.; Fishell, G.",
+    "year": 2014,
+    "chunk_index": 1,
+    "text": "Feedforward inhibition, mediated primarily by PV interneurons driven by the same thalamic or cortical afferents that excite pyramidal cells, restricts the temporal window within which a pyramidal cell can integrate incoming excitation. Because inhibition arrives slightly after excitation — due to the disynaptic delay — it creates a narrow coincidence window of a few milliseconds, ensuring that only near-simultaneous inputs drive spiking. Feedback inhibition, by contrast, is recruited by the pyramidal cell's own output, providing a local gain control mechanism that prevents runaway excitation.",
+    "taxonomy_node_ids": ["RA039", "RA040"]
+  },
+  {
+    "id": 1800001,
+    "doi": "10.1016/j.neuron.2014.12.032",
+    "title": "NMDA and AMPA Receptor Dynamics at the Postsynaptic Density",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.; Kennedy, M. B.",
+    "year": 2014,
+    "chunk_index": 0,
+    "text": "AMPA receptors mediate the fast component of the excitatory postsynaptic current and their number at the postsynaptic density is the principal determinant of basal synaptic strength. Receptors are in dynamic equilibrium between synaptic, extrasynaptic, and intracellular pools, with lateral diffusion and regulated exo/endocytosis controlling surface expression. LTP is expressed largely through the rapid insertion of GluA1-containing AMPA receptors into the postsynaptic density, increasing the amplitude of the EPSC within minutes of plasticity induction.",
+    "taxonomy_node_ids": ["RA041", "RA025"]
+  },
+  {
+    "id": 1800002,
+    "doi": "10.1016/j.neuron.2014.12.032",
+    "title": "NMDA and AMPA Receptor Dynamics at the Postsynaptic Density",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.; Kennedy, M. B.",
+    "year": 2014,
+    "chunk_index": 1,
+    "text": "NMDA receptors are obligate heteromers combining GluN1 with GluN2 or GluN3 subunits. Their dual ligand and voltage dependence — requiring both glutamate binding and postsynaptic depolarisation to relieve the magnesium block — makes them uniquely suited as coincidence detectors for Hebbian plasticity. The GluN2B subunit prolongs NMDA receptor opening duration, increasing calcium influx and lowering the threshold for LTP induction; the shift from predominantly GluN2B to GluN2A subunit composition during development coincides with the closure of the critical period.",
+    "taxonomy_node_ids": ["RA042", "D008"]
+  },
+  {
+    "id": 1900001,
+    "doi": "10.1016/j.tins.2021.08.003",
+    "title": "Dopaminergic Modulation of Corticostriatal and Prefrontal Circuits",
+    "authors": "Tritsch, N. X.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2021,
+    "chunk_index": 0,
+    "text": "Midbrain dopaminergic neurons project via three major pathways: the mesolimbic pathway from the ventral tegmental area (VTA) to the nucleus accumbens and limbic structures; the mesocortical pathway from VTA to prefrontal cortex; and the nigrostriatal pathway from substantia nigra pars compacta to dorsal striatum. Each pathway modulates its target circuit through distinct receptor subtype distributions and is implicated in different aspects of motivated behaviour, learning, and motor control.",
+    "taxonomy_node_ids": ["RA045", "SP017"]
+  },
+  {
+    "id": 1900002,
+    "doi": "10.1016/j.tins.2021.08.003",
+    "title": "Dopaminergic Modulation of Corticostriatal and Prefrontal Circuits",
+    "authors": "Tritsch, N. X.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2021,
+    "chunk_index": 1,
+    "text": "In prefrontal cortex, dopamine exerts an inverted-U-shaped influence on working memory function through D1 receptors: moderate dopamine levels optimise the signal-to-noise ratio of persistent firing in prefrontal pyramidal cells, while too little or too much dopamine degrades the fidelity of maintained representations. Cholinergic input from the basal forebrain produces complementary effects through muscarinic receptors, suppressing slow oscillations and enhancing gamma-band activity to increase the effective signal-to-noise ratio during periods of active engagement.",
+    "taxonomy_node_ids": ["RA047", "RA045"]
+  },
+  {
+    "id": 2000001,
+    "doi": "10.1523/JNEUROSCI.2844-17.2018",
+    "title": "Interaural Time Differences and the Neural Computation of Sound Localisation",
+    "authors": "Grothe, B.; Pecka, M.",
+    "year": 2018,
+    "chunk_index": 0,
+    "text": "Sound source localisation in the horizontal plane relies on the comparison of interaural time differences (ITDs) — submillisecond disparities in sound arrival time between the two ears. Neurons in the medial superior olive (MSO) act as coincidence detectors, firing maximally when excitatory inputs from the two cochlear nuclei arrive within a narrow temporal window. The resulting sensitivity to ITD creates a functional map of auditory space, with each MSO neuron tuned to a specific horizontal angle. This computation demands extraordinary temporal precision: the biologically relevant ITD range spans only 0–700 microseconds, requiring submillisecond timing accuracy throughout the ascending auditory pathway.",
+    "taxonomy_node_ids": ["RA015", "SP005"]
+  },
+  {
+    "id": 2000002,
+    "doi": "10.1523/JNEUROSCI.2844-17.2018",
+    "title": "Interaural Time Differences and the Neural Computation of Sound Localisation",
+    "authors": "Grothe, B.; Pecka, M.",
+    "year": 2018,
+    "chunk_index": 1,
+    "text": "Tactile perception is mediated by four classes of low-threshold mechanoreceptors in glabrous skin, each tuned to distinct spatiotemporal features of mechanical stimulation. Meissner corpuscles (rapidly adapting, small receptive fields) detect low-frequency flutter and slip; Merkel discs (slowly adapting, small fields) encode sustained pressure and fine spatial form; Ruffini endings (slowly adapting, large fields) signal skin stretch and finger position; Pacinian corpuscles (rapidly adapting, large fields) respond selectively to high-frequency vibration. These four populations provide parallel, complementary filtering channels that are combined in somatosensory cortex to support the full range of tactile discrimination.",
+    "taxonomy_node_ids": ["RA016", "SP006"]
+  },
+  {
+    "id": 2100001,
+    "doi": "10.1016/j.neuron.2017.09.010",
+    "title": "Somatosensory Cortex: Organisation, Plasticity and the Representation of the Body",
+    "authors": "Kaas, J. H.; Qi, H. X.; Stepniewska, I.",
+    "year": 2017,
+    "chunk_index": 0,
+    "text": "Primary somatosensory cortex (S1) contains a somatotopic map of the body surface in which cortical area is proportional to receptor density rather than physical size. The hand, lips, and face occupy disproportionately large representations, reflecting their dense innervation and high demands for tactile discrimination. S1 is functionally subdivided into four Brodmann areas — 3a encoding proprioception, 3b cutaneous touch, 1 texture, and 2 object size and shape — connected by a feedforward processing hierarchy that converges on secondary somatosensory cortex and parietal association areas.",
+    "taxonomy_node_ids": ["RA017", "SP006"]
+  },
+  {
+    "id": 2100002,
+    "doi": "10.1016/j.neuron.2017.09.010",
+    "title": "Somatosensory Cortex: Organisation, Plasticity and the Representation of the Body",
+    "authors": "Kaas, J. H.; Qi, H. X.; Stepniewska, I.",
+    "year": 2017,
+    "chunk_index": 1,
+    "text": "Nociceptors are high-threshold primary afferents that respond to potentially tissue-damaging stimuli. Thinly myelinated Aδ fibres mediate fast, sharp first pain; unmyelinated C fibres mediate slow, burning second pain. Both project to the dorsal horn, releasing glutamate and substance P onto spinothalamic tract neurons that ascend to contralateral thalamus and then somatosensory and insular cortex. Following tissue injury, local prostaglandins, bradykinin, and NGF sensitise nociceptors, lowering their activation threshold and producing hyperalgesia.",
+    "taxonomy_node_ids": ["RA018", "SP006"]
+  },
+  {
+    "id": 2200001,
+    "doi": "10.1038/nrn.2016.155",
+    "title": "Structural Correlates of Synaptic Plasticity: Spine Dynamics and Axonal Remodeling",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.",
+    "year": 2016,
+    "chunk_index": 0,
+    "text": "Dendritic spines are the primary postsynaptic sites of excitatory synaptic input and undergo rapid structural plasticity in response to activity. LTP induction triggers spine head enlargement within minutes, driven by actin polymerisation downstream of CaMKII and RhoA activation. Larger spines contain more AMPA receptors and have lower electrical resistance, increasing their synaptic weight. LTD is associated with spine shrinkage and, for small spines, eventual retraction. The correlation between spine volume and synaptic strength means that dendritic spine morphology constitutes a physical substrate for long-term information storage.",
+    "taxonomy_node_ids": ["RA030", "SP011"]
+  },
+  {
+    "id": 2200002,
+    "doi": "10.1038/nrn.2016.155",
+    "title": "Structural Correlates of Synaptic Plasticity: Spine Dynamics and Axonal Remodeling",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.",
+    "year": 2016,
+    "chunk_index": 1,
+    "text": "Axonal arbors are refined during development through a competitive process in which more active inputs displace less active ones from shared postsynaptic targets. In the visual system, spontaneous retinal waves synchronise activity within each eye but not between eyes, driving the segregation of binocular inputs into monocular columns in primary visual cortex. In the adult, axonal sprouting can partially reinnervate denervated targets following injury, but is inhibited by myelin-associated glycoprotein, Nogo-A, and chondroitin sulphate proteoglycans in the extracellular matrix.",
+    "taxonomy_node_ids": ["RA031", "SP011"]
+  },
+  {
+    "id": 2300001,
+    "doi": "10.1016/j.tins.2020.04.003",
+    "title": "GABA Receptor Diversity and Chloride Homeostasis in Neural Inhibition",
+    "authors": "Farrant, M.; Nusser, Z.",
+    "year": 2020,
+    "chunk_index": 0,
+    "text": "GABA-A receptors are pentameric ligand-gated chloride channels assembled from combinations of α, β, and γ subunits whose composition determines kinetics, conductance, and pharmacological sensitivity. Synaptic GABA-A receptors, typically containing α1β2γ2 subunits, mediate fast phasic inhibition with rapid activation and desensitisation. Extrasynaptic receptors containing α4 or α6 paired with δ subunits have high affinity for ambient GABA and slow desensitisation, producing tonic inhibitory current. GABA-B receptors are metabotropic Gi-coupled heterodimers that activate GIRK channels and inhibit adenylyl cyclase, generating slow inhibitory currents at both presynaptic and postsynaptic sites.",
+    "taxonomy_node_ids": ["RA043", "SP016"]
+  },
+  {
+    "id": 2300002,
+    "doi": "10.1016/j.tins.2020.04.003",
+    "title": "GABA Receptor Diversity and Chloride Homeostasis in Neural Inhibition",
+    "authors": "Farrant, M.; Nusser, Z.",
+    "year": 2020,
+    "chunk_index": 1,
+    "text": "The direction of GABA-A-mediated current depends on the intracellular chloride concentration relative to the channel's reversal potential. In mature neurons, KCC2 co-transporters actively export chloride, keeping intracellular concentration low so that GABA-A activation drives chloride influx and hyperpolarisation. In immature neurons, NKCC1 importers dominate, accumulating chloride intracellularly so that GABA-A activation is depolarising rather than inhibitory. This developmental switch from NKCC1 to KCC2 dominance explains why GABA is excitatory early in development and inhibitory in the mature brain.",
+    "taxonomy_node_ids": ["RA044", "SP016"]
+  },
+  {
+    "id": 2400001,
+    "doi": "10.1016/j.neuron.2020.07.027",
+    "title": "Serotonergic Projections and their Modulation of Cortical and Limbic Circuits",
+    "authors": "Ren, J.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2020,
+    "chunk_index": 0,
+    "text": "Serotonergic neurons in the dorsal and median raphe nuclei project broadly to forebrain, cerebellum, and spinal cord via a network of thin axons that release serotonin through both synaptic and volume transmission. In cortex and hippocampus, serotonin acts primarily through Gi-coupled 5-HT1A receptors on pyramidal cell soma and dendrites (inhibitory) and Gq-coupled 5-HT2A receptors on apical dendrites and interneurons (excitatory). Raphe firing rate is highest during active waking, reduced during NREM sleep, and nearly silent during REM sleep, making raphe activity a reliable index of arousal state and a modulator of cortical signal-to-noise ratio.",
+    "taxonomy_node_ids": ["RA046", "SP017"]
+  },
+  {
+    "id": 100003,
+    "doi": "10.1085/jgp.201711882",
+    "title": "Voltage-Gated Sodium Channel Gating and the Molecular Basis of Action Potential Initiation",
+    "authors": "Catterall, W. A.; Wisedchaisri, G.; Zheng, N.",
+    "year": 2017,
+    "chunk_index": 3,
+    "text": "The Hodgkin-Huxley model predicts a precise relationship between injected current and firing frequency. At threshold current levels neurons fire repetitively at intervals set by the recovery time of voltage-gated channels. Above threshold, firing rate increases monotonically — the f-I curve — encoding stimulus intensity in the rate code framework. The absolute refractory period, during which no second spike can be initiated, reflects sodium channel inactivation; the relative refractory period reflects the elevated potassium conductance during repolarisation. These predictions have been confirmed quantitatively across diverse neuron types, establishing the H-H framework as the foundation for computational neuroscience.",
+    "taxonomy_node_ids": ["RA002", "T001"]
+  },
+  {
+    "id": 200003,
+    "doi": "10.1016/j.neuron.2013.10.022",
+    "title": "Molecular Mechanisms of Neurotransmitter Release at the Presynaptic Active Zone",
+    "authors": "Sudhof, T. C.",
+    "year": 2013,
+    "chunk_index": 2,
+    "text": "Short-term synaptic dynamics emerge from depletion and replenishment of the readily releasable vesicle pool and from calcium-dependent changes in release probability. At high-probability synapses, successive action potentials deplete the pool faster than it replenishes, producing synaptic depression — a progressive reduction in postsynaptic current amplitude. At low-probability synapses, residual calcium from prior spikes augments subsequent release, producing facilitation. These properties mean the same synapse filters different input patterns differently: depressing synapses act as low-pass filters, while facilitating synapses amplify high-frequency bursts and report the onset of sustained inputs.",
+    "taxonomy_node_ids": ["RA004", "D009"]
+  },
+  {
+    "id": 300003,
+    "doi": "10.1016/j.neuron.2016.09.038",
+    "title": "Dendritic Computation: Active Conductances and Nonlinear Integration in Pyramidal Neurons",
+    "authors": "Larkum, M. E.; Nevian, T.",
+    "year": 2016,
+    "chunk_index": 2,
+    "text": "The segregation of synaptic inputs across dendritic compartments allows individual branches to act as independent computational subunits. Coincident activation of many inputs to a single thin oblique branch generates a local dendritic spike that propagates to the soma more reliably than the same inputs distributed across the dendritic tree. This branch-specific integration means that neurons effectively implement a two-layer computation: a first layer in which individual branches detect coincident local inputs, and a second layer in which the soma integrates the outputs of those branches, multiplying the neuron's effective computational capacity.",
+    "taxonomy_node_ids": ["RA009", "RA008"]
+  },
+  {
+    "id": 300004,
+    "doi": "10.1016/j.neuron.2016.09.038",
+    "title": "Dendritic Computation: Active Conductances and Nonlinear Integration in Pyramidal Neurons",
+    "authors": "Larkum, M. E.; Nevian, T.",
+    "year": 2016,
+    "chunk_index": 3,
+    "text": "Neurons can adjust their effective integration window by modulating membrane resistance: opening leak conductances shortens the temporal summation window, increasing precision at the cost of sensitivity, while closing leaks extends it, increasing sensitivity but reducing temporal selectivity. Neuromodulators including acetylcholine and norepinephrine regulate these conductances, allowing the brain to shift the same neuron between a coincidence-detection regime — appropriate for detecting brief synchronous inputs — and a temporal-integrator regime — appropriate for accumulating evidence over longer windows. This active regulation of integration dynamics is a key mechanism by which arousal state shapes cortical processing mode.",
+    "taxonomy_node_ids": ["SP003", "RA007"]
+  },
+  {
+    "id": 400003,
+    "doi": "10.1523/JNEUROSCI.4993-08.2009",
+    "title": "Centre-Surround Organisation of Retinal Ganglion Cell Receptive Fields",
+    "authors": "Demb, J. B.; Singer, J. H.",
+    "year": 2009,
+    "chunk_index": 2,
+    "text": "Direction-selective ganglion cells respond strongly to motion in a preferred direction and weakly to the opposite null direction. Selectivity is generated within the retina by starburst amacrine cells, which release GABA onto ganglion cell dendrites asymmetrically: calcium accumulates preferentially in starburst tips pointing centrifugally from the cell body, and these tips selectively contact the dendrites of ganglion cells for which that direction is null. This elegant circuit demonstrates that complex computations including motion detection can be performed within the retina before any signal reaches the brain, implementing lateral inhibition in both space and direction simultaneously.",
+    "taxonomy_node_ids": ["RA010", "T008"]
+  },
+  {
+    "id": 500003,
+    "doi": "10.1038/nrn.2017.141",
+    "title": "Orientation Selectivity and the Development of Primary Visual Cortex",
+    "authors": "Priebe, N. J.; Ferster, D.",
+    "year": 2017,
+    "chunk_index": 2,
+    "text": "Orientation-selective neurons in V1 are organised into vertical columns spanning all six cortical layers. Adjacent columns share similar but slightly shifted preferred orientations, and across the cortical surface all orientations are represented within a repeating unit called a hypercolumn. At singularity points in the orientation map — pinwheels — neurons with all preferred orientations converge within a small patch of cortex. Despite the loss of the spatial segregation that elsewhere simplifies lateral inhibition, orientation tuning at pinwheel centres is maintained at similar sharpness to that at other locations, suggesting that mechanisms beyond nearest-neighbour inhibition sustain selectivity.",
+    "taxonomy_node_ids": ["RA011", "RA037"]
+  },
+  {
+    "id": 500004,
+    "doi": "10.1038/nrn.2017.141",
+    "title": "Orientation Selectivity and the Development of Primary Visual Cortex",
+    "authors": "Priebe, N. J.; Ferster, D.",
+    "year": 2017,
+    "chunk_index": 3,
+    "text": "Surround suppression — the reduction of a V1 neuron's response when a stimulus extends beyond its classical receptive field — arises from horizontal connections between columns and feedback from higher areas. It implements a form of figure-ground segregation at the earliest cortical stage: responses are strongest for stimuli that differ from their surround. Cross-orientation inhibition, mediated by interneurons driven by orientations orthogonal to the preferred, further sharpens tuning by suppressing responses to non-preferred angles. Together, these inhibitory mechanisms produce neurons sensitive not just to orientation but to the contextual relationship between a stimulus and its spatial surround.",
+    "taxonomy_node_ids": ["RA011", "T008"]
+  },
+  {
+    "id": 600003,
+    "doi": "10.1016/j.neuron.2019.09.004",
+    "title": "Hierarchical Processing in the Ventral Visual Stream",
+    "authors": "DiCarlo, J. J.; Zoccolan, D.; Rust, N. C.",
+    "year": 2019,
+    "chunk_index": 2,
+    "text": "Inferotemporal cortex contains neurons that respond selectively to complex shapes including faces, hands, and objects regardless of viewpoint or illumination. Face-selective patches distributed along the posterior-to-anterior IT axis respond to facial identity invariantly across natural viewing conditions. The selectivity of IT neurons for abstract object categories, rather than low-level visual features, demonstrates that the ventral stream successfully extracts invariant representations sufficient for object recognition. Population decoding from IT distinguishes object categories with high accuracy even when V1 activity does not reliably separate the same categories, confirming that the transformation is performed between V1 and IT.",
+    "taxonomy_node_ids": ["RA012", "SP004"]
+  },
+  {
+    "id": 600004,
+    "doi": "10.1016/j.neuron.2019.09.004",
+    "title": "Hierarchical Processing in the Ventral Visual Stream",
+    "authors": "DiCarlo, J. J.; Zoccolan, D.; Rust, N. C.",
+    "year": 2019,
+    "chunk_index": 3,
+    "text": "Top-down feedback from higher visual areas modulates responses in lower areas in a context-dependent manner, enhancing responses to attended stimuli and suppressing those to unattended ones. Predictive coding formalises this as the brain generating top-down predictions that are subtracted from incoming sensory signals, with only the residual error propagated forward. This framework predicts — and experiments confirm — that familiar or expected stimuli produce weaker V1 responses than unexpected ones, because the prediction cancels the expected component. Recurrent processing between areas is therefore not mere repetition of feedforward signals but an iterative inference that converges on the most probable interpretation of the sensory input.",
+    "taxonomy_node_ids": ["RA012", "T010"]
+  },
+  {
+    "id": 700003,
+    "doi": "10.1016/j.neuron.2018.03.044",
+    "title": "Mechanoelectrical Transduction in Cochlear Hair Cells",
+    "authors": "Fettiplace, R.",
+    "year": 2018,
+    "chunk_index": 2,
+    "text": "Outer hair cells amplify basilar membrane vibration through somatic electromotility mediated by the motor protein prestin. Voltage changes across the outer hair cell membrane produce rapid length changes that feed mechanical energy back into the basilar membrane, sharpening its frequency tuning and amplifying responses to soft sounds by up to 40 dB. Outer hair cells are therefore mechanical amplifiers rather than primary sensory afferents; the inner hair cells — connected to 95% of auditory nerve fibres — are the true transducers. This division of labour between amplification and transduction allows the cochlea to achieve both the sensitivity and the frequency resolution required for speech and music perception.",
+    "taxonomy_node_ids": ["RA013", "RA014"]
+  },
+  {
+    "id": 800003,
+    "doi": "10.1152/jn.00483.2015",
+    "title": "Organisation and Function of the Corticospinal Tract in Voluntary Movement",
+    "authors": "Lemon, R. N.",
+    "year": 2015,
+    "chunk_index": 2,
+    "text": "Individual corticomotoneuronal cells make direct monosynaptic contact with multiple motor neuron pools, allowing single cortical neurons to coordinate several muscles simultaneously. CM connection strength is graded: a cell may make strong connections to a primary target muscle and weaker connections to synergists. In macaques, digit flexor and extensor motor neurons receive input from partially overlapping but anatomically distinct M1 territories, providing the substrate for independent finger movements. The density of direct CM connections scales with behavioural dexterity across primate species, establishing this monosynaptic pathway as the anatomical correlate of fine manual skill.",
+    "taxonomy_node_ids": ["RA020", "RA021"]
+  },
+  {
+    "id": 800004,
+    "doi": "10.1152/jn.00483.2015",
+    "title": "Organisation and Function of the Corticospinal Tract in Voluntary Movement",
+    "authors": "Lemon, R. N.",
+    "year": 2015,
+    "chunk_index": 3,
+    "text": "Premotor cortex and supplementary motor area (SMA) are active during movement preparation, before the onset of primary motor cortex activity. SMA neurons exhibit preparatory activity beginning several seconds before movement onset, reflecting the specification of motor programmes. Premotor cortex is more tightly coupled to visuomotor transformations: it contains neurons active during both observation and execution of actions, suggesting a role in action understanding as well as production. The sequential activation of SMA, premotor cortex, and M1 during voluntary movement defines a cortical motor hierarchy in which motor plans are progressively specified from abstract intention to precise muscle-level commands.",
+    "taxonomy_node_ids": ["SP007", "RA019"]
+  },
+  {
+    "id": 900003,
+    "doi": "10.1038/nrn.2016.31",
+    "title": "The Basal Ganglia: Circuit Architecture and Action Selection",
+    "authors": "Freeze, B. S.; Kravitz, A. V.; Hammack, N.; Bhatt, D. L.",
+    "year": 2016,
+    "chunk_index": 2,
+    "text": "Dopamine encodes reward prediction errors in the striatum: phasic bursts when a reward occurs unexpectedly, maintained baseline activity when a predicted reward arrives, and suppression when a predicted reward is omitted. This teaching signal biases the direct-indirect pathway balance over repeated experience, strengthening direct pathway synapses for rewarded actions and weakening them for unrewarded ones. Optogenetic activation of direct pathway neurons is sufficient to produce conditioned place preference, while indirect pathway activation produces avoidance, establishing causal links between the opponent pathway architecture and reward-driven behavioural selection.",
+    "taxonomy_node_ids": ["RA022", "RA045"]
+  },
+  {
+    "id": 1000003,
+    "doi": "10.1016/j.neuron.2011.05.001",
+    "title": "Cerebellar Learning and Error Correction via Climbing Fibre Signals",
+    "authors": "De Zeeuw, C. I.; Hoebeek, F. E.; Bosman, L. W.",
+    "year": 2011,
+    "chunk_index": 2,
+    "text": "The deep cerebellar nuclei — dentate, interpositus, and fastigial — are the primary output stations of the cerebellum, receiving inhibitory input from Purkinje cells and excitatory collaterals from mossy and climbing fibres. Climbing fibre-driven LTD at parallel fibre-Purkinje cell synapses reduces Purkinje cell inhibition of the relevant deep nucleus, disinhibiting it and increasing cerebellar output. This learning-induced change in deep nucleus discharge is the proximal cause of the altered motor output that constitutes cerebellar adaptation. The site of plasticity storage shifts from the cortex to the deep nuclei as learning consolidates, providing two complementary substrates for motor memory at different stages.",
+    "taxonomy_node_ids": ["RA023", "SP008"]
+  },
+  {
+    "id": 1000004,
+    "doi": "10.1016/j.neuron.2011.05.001",
+    "title": "Cerebellar Learning and Error Correction via Climbing Fibre Signals",
+    "authors": "De Zeeuw, C. I.; Hoebeek, F. E.; Bosman, L. W.",
+    "year": 2011,
+    "chunk_index": 3,
+    "text": "The dentato-thalamo-cortical pathway conveys cerebellar output to motor and premotor cortex via the ventrolateral thalamus with a conduction delay of approximately 10 ms, allowing the cerebellum to influence cortical motor commands in near-real time during ongoing movement. Disruption of this pathway produces the hallmark cerebellar signs of intention tremor, dysmetria, and timing impairment — distinct from the bradykinesia and rigidity of basal ganglia disorders. The cerebellum and basal ganglia communicate via disynaptic thalamic pathways, allowing the two systems to coordinate action selection and execution rather than operating in complete parallel.",
+    "taxonomy_node_ids": ["RA024", "RA023"]
+  },
+  {
+    "id": 1100003,
+    "doi": "10.1038/s41583-022-00612-0",
+    "title": "NMDA Receptor-Dependent Long-Term Potentiation: Mechanisms and Significance",
+    "authors": "Nicoll, R. A.",
+    "year": 2022,
+    "chunk_index": 2,
+    "text": "LTP is accompanied by rapid enlargement of dendritic spine heads within minutes of induction, driven by CaMKII-mediated actin polymerisation. Longitudinal in vivo two-photon imaging shows that spines potentiated during learning are more stable and less likely to be subsequently eliminated than non-potentiated spines. The enlargement of the postsynaptic density that accompanies spine growth increases the docking area for additional AMPA receptor insertion, linking structural and functional expressions of LTP in a mutually reinforcing cycle. This structural persistence provides a substrate for memory that survives protein turnover and is consistent with the timescale of long-term memory retention.",
+    "taxonomy_node_ids": ["RA025", "RA030"]
+  },
+  {
+    "id": 1200003,
+    "doi": "10.1038/nrn2332",
+    "title": "Spike-Timing-Dependent Plasticity: From Synapse to Perception",
+    "authors": "Caporale, N.; Dan, Y.",
+    "year": 2008,
+    "chunk_index": 2,
+    "text": "STDP plays a central role in the activity-dependent refinement of neural circuits during development. During critical periods, the precise timing relationships between pre- and postsynaptic firing, shaped by sensory experience, selectively strengthen inputs that reliably precede postsynaptic activity and weaken those that do not. In the visual system, correlated activity between cortical neurons driven by the same eye drives the competitive stabilisation of ocular dominance columns. The closure of the critical period can therefore be understood as a transition from STDP-governed plasticity — highly sensitive to timing — to a regime in which the same activity patterns produce much smaller changes in synaptic weight.",
+    "taxonomy_node_ids": ["RA027", "T006"]
+  },
+  {
+    "id": 1300003,
+    "doi": "10.1016/j.neuron.2013.09.004",
+    "title": "Synaptic Scaling: A Homeostatic Mechanism for Stabilising Network Activity",
+    "authors": "Turrigiano, G. G.",
+    "year": 2013,
+    "chunk_index": 2,
+    "text": "Synaptic scaling is induced over hours to days by prolonged changes in the postsynaptic neuron's own firing rate, not by individual synaptic events. The induction signal is a calcium-dependent sensor of average activity, and the effector mechanism involves regulated transcription of AMPA receptor subunits and auxiliary proteins. Because scaling adjusts all synapses by a common multiplicative factor, it preserves the relative differences in strength between synapses that encode learned information — in contrast to a non-multiplicative adjustment that would flatten relative weights and erase information stored in synaptic patterns. This property makes synaptic scaling compatible with stable long-term memory storage.",
+    "taxonomy_node_ids": ["RA028", "SP010"]
+  },
+  {
+    "id": 1300004,
+    "doi": "10.1016/j.neuron.2013.09.004",
+    "title": "Synaptic Scaling: A Homeostatic Mechanism for Stabilising Network Activity",
+    "authors": "Turrigiano, G. G.",
+    "year": 2013,
+    "chunk_index": 3,
+    "text": "Intrinsic excitability homeostasis adjusts the neuron's input-output function by regulating voltage-gated channel density and kinetics. Chronic activity blockade increases the persistent sodium current and decreases the A-type potassium current, making neurons more excitable and shifting the f-I curve to the left. Chronic hyperactivity produces the opposite changes. Unlike synaptic scaling which acts on the input side, intrinsic regulation shifts the neuron's gain — the steepness of the f-I curve — allowing it to respond to a wider or narrower range of input currents. Neural gain is therefore not a fixed property but is continuously calibrated to match the statistical distribution of inputs the neuron receives.",
+    "taxonomy_node_ids": ["RA029", "D005"]
+  },
+  {
+    "id": 1400003,
+    "doi": "10.1126/science.1077395",
+    "title": "Gamma Oscillations in Cortical Networks and the Binding Problem",
+    "authors": "Buzsaki, G.; Draguhn, A.",
+    "year": 2004,
+    "chunk_index": 2,
+    "text": "Theta-gamma coupling is a prominent feature of hippocampal dynamics during active exploration: gamma amplitude is modulated by theta phase, with gamma power peaking near the theta trough. This nested oscillation structure organises sequential neural representations — each gamma cycle within a theta cycle may represent one item, and the item's position within the theta cycle encodes its order in a sequence. The coupling therefore provides a mechanism for multiplexing a sequence of representations within a single theta cycle, enabling the rapid read-out of ordered information such as spatial trajectories or memorised lists within a brief temporal window.",
+    "taxonomy_node_ids": ["RA032", "SP012"]
+  },
+  {
+    "id": 1500003,
+    "doi": "10.1126/science.1058330",
+    "title": "Theta Oscillations in Hippocampus and the Organisation of Sequential Activity",
+    "authors": "O'Keefe, J.; Recce, M. L.",
+    "year": 2001,
+    "chunk_index": 2,
+    "text": "During slow-wave sleep, hippocampal theta gives way to sharp-wave ripples: brief bursts of 100–200 Hz oscillations superimposed on a slow positive deflection. Ripples are associated with coordinated ensemble reactivation — the compressed replay of waking activity sequences in the same temporal order. The replay may run forward (representing the just-experienced trajectory) or in reverse (a prospective planning signal), suggesting the hippocampus uses sleep reactivation not only for consolidation but also for evaluating potential future paths. Disrupting sharp-wave ripples selectively during post-learning sleep impairs spatial memory without affecting other sleep-dependent processes.",
+    "taxonomy_node_ids": ["RA033", "RA034"]
+  },
+  {
+    "id": 1500004,
+    "doi": "10.1126/science.1058330",
+    "title": "Theta Oscillations in Hippocampus and the Organisation of Sequential Activity",
+    "authors": "O'Keefe, J.; Recce, M. L.",
+    "year": 2001,
+    "chunk_index": 3,
+    "text": "Theta phase precession produces a temporal code in which the sequence of firing across a neuronal population within a single theta cycle encodes the spatial sequence of locations the animal will traverse: cells with place fields ahead of the current position fire at early theta phases, those at the current position at intermediate phases, and those behind at late phases. This prospective spatial code is updated on every theta cycle — approximately every 100–150 ms — providing a continuously refreshed short-term trajectory representation that supports path integration and planning. The phase code is therefore orthogonal to and complementary with the rate code, doubling the information capacity of hippocampal population activity.",
+    "taxonomy_node_ids": ["RA033", "T004"]
+  },
+  {
+    "id": 1600003,
+    "doi": "10.1016/j.neuron.2015.09.001",
+    "title": "Cortical Lamination: Cell Types, Connectivity and Canonical Circuits",
+    "authors": "Harris, K. D.; Shepherd, G. M. G.",
+    "year": 2015,
+    "chunk_index": 2,
+    "text": "Cortical areas communicate through interlaminar projections that follow a consistent hierarchical pattern: feedforward projections originate from layers 2/3 and 5, terminating primarily in layer 4 of the target area; feedback projections originate from layers 5 and 6, terminating in layers 1 and 6 of the source area. This laminar specificity defines a cortical hierarchy in which areas can be ranked from primary sensory to association cortex by their relative proportions of feedforward and feedback connections. The direction of information flow is therefore embedded in the anatomy of the projection, providing a structural backbone for the hierarchical predictive processing described by top-down generative models of cortical function.",
+    "taxonomy_node_ids": ["RA035", "RA037"]
+  },
+  {
+    "id": 1700003,
+    "doi": "10.1038/nrn3265",
+    "title": "Interneuron Diversity and the Logic of Cortical Inhibition",
+    "authors": "Kepecs, A.; Fishell, G.",
+    "year": 2014,
+    "chunk_index": 2,
+    "text": "Somatostatin interneurons target the distal dendrites of pyramidal cells, selectively gating the integration of top-down contextual inputs that arrive in the apical tuft. Because distal dendritic inhibition suppresses apical calcium spikes without strongly affecting perisomatic excitability, SST interneurons can reduce sensitivity to contextual modulation without blocking the primary sensory response. SST interneurons are themselves inhibited by VIP interneurons, so activation of VIP cells releases pyramidal cells from SST-mediated dendritic inhibition, enhancing their sensitivity to top-down signals. This disinhibitory logic converts a neuromodulatory signal — activating VIP cells — into a multiplicative gain increase on apical dendritic integration.",
+    "taxonomy_node_ids": ["RA038", "RA040"]
+  },
+  {
+    "id": 1700004,
+    "doi": "10.1038/nrn3265",
+    "title": "Interneuron Diversity and the Logic of Cortical Inhibition",
+    "authors": "Kepecs, A.; Fishell, G.",
+    "year": 2014,
+    "chunk_index": 3,
+    "text": "The VIP-SST disinhibitory circuit provides a mechanism for state-dependent gating of cortical processing. During heightened arousal or focused attention, cholinergic and serotonergic inputs activate VIP interneurons, suppressing SST cells and releasing pyramidal cells from dendritic inhibition. Simultaneously, the same neuromodulators act directly on pyramidal cells through Gq- and Gi-coupled receptors, further increasing their responsiveness. This convergent disinhibitory mechanism ensures that attentional signals produce large, reliable increases in pyramidal cell firing rather than the modest effects expected from direct modulation alone, providing a circuit-level explanation for the amplification of cortical responses during selective attention.",
+    "taxonomy_node_ids": ["SP014", "RA039"]
+  },
+  {
+    "id": 1800003,
+    "doi": "10.1016/j.neuron.2014.12.032",
+    "title": "NMDA and AMPA Receptor Dynamics at the Postsynaptic Density",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.; Kennedy, M. B.",
+    "year": 2014,
+    "chunk_index": 2,
+    "text": "The NMDA receptor's voltage-dependent magnesium block is the molecular implementation of Hebb's postulate that synaptic strengthening requires coincident pre- and postsynaptic activity. The block is relieved only when the postsynaptic membrane is already depolarised — typically by concurrent AMPA receptor current from other active inputs — at the same time as glutamate occupies the receptor. This dual requirement means NMDA receptors pass calcium only under conditions of coincident activity, directly gating the downstream CaMKII activation and AMPA receptor insertion that express LTP. Mutations that impair magnesium block or calcium permeability predictably disrupt associative LTP and spatial learning, confirming the NMDA receptor as the coincidence detector for Hebbian plasticity.",
+    "taxonomy_node_ids": ["RA042", "T002"]
+  },
+  {
+    "id": 1900003,
+    "doi": "10.1016/j.tins.2021.08.003",
+    "title": "Dopaminergic Modulation of Corticostriatal and Prefrontal Circuits",
+    "authors": "Tritsch, N. X.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2021,
+    "chunk_index": 2,
+    "text": "Midbrain dopamine neurons encode reward prediction errors according to temporal difference learning rules: phasic bursts for unexpected rewards, maintained baseline for fully predicted rewards, and below-baseline suppression for omitted predicted rewards. This teaching signal updates the value of preceding states and actions, providing the biological substrate for reinforcement learning. The prediction error signal is conveyed to striatum via the mesolimbic and nigrostriatal pathways, where it drives synaptic modifications at corticostriatal terminals through the three-factor learning rule: Hebbian co-activation of cortical and striatal neurons, gated by dopaminergic eligibility signals, selectively strengthens connections that reliably predicted rewarded outcomes.",
+    "taxonomy_node_ids": ["RA045", "T009"]
+  },
+  {
+    "id": 1900004,
+    "doi": "10.1016/j.tins.2021.08.003",
+    "title": "Dopaminergic Modulation of Corticostriatal and Prefrontal Circuits",
+    "authors": "Tritsch, N. X.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2021,
+    "chunk_index": 3,
+    "text": "Dopaminergic and cholinergic neuromodulation interact extensively in striatum. Tonically active cholinergic interneurons pause their firing in response to salient stimuli and dopamine receptor activation. This pause coincides with the dopaminergic teaching signal and may gate corticostriatal plasticity by transiently reducing muscarinic inhibition of glutamate release at corticostriatal terminals. In prefrontal cortex, dopamine and acetylcholine target overlapping pyramidal cell populations through different receptor subtypes, with their combined effects on neural gain and signal-to-noise ratio determining the fidelity of working memory representations during the current cognitive state.",
+    "taxonomy_node_ids": ["RA046", "RA047"]
+  },
+  {
+    "id": 2000003,
+    "doi": "10.1523/JNEUROSCI.2844-17.2018",
+    "title": "Interaural Time Differences and the Neural Computation of Sound Localisation",
+    "authors": "Grothe, B.; Pecka, M.",
+    "year": 2018,
+    "chunk_index": 2,
+    "text": "High-frequency sounds are localised using interaural level differences (ILDs) rather than timing differences, because above approximately 1.5 kHz the wavelength is shorter than the interaural distance, making phase-locking unreliable. The lateral superior olive (LSO) computes ILDs through an opponent mechanism: excitatory input from the ipsilateral cochlear nucleus is compared with inhibitory input relayed from the contralateral cochlear nucleus via the MNTB. LSO neurons are excited by ipsilateral sounds and inhibited by contralateral ones, creating sensitivity to the level difference that encodes azimuth for high-frequency stimuli. The complementary ITD and ILD systems together provide accurate sound localisation across the full audible frequency range.",
+    "taxonomy_node_ids": ["RA015", "RA014"]
+  },
+  {
+    "id": 2100003,
+    "doi": "10.1016/j.neuron.2017.09.010",
+    "title": "Somatosensory Cortex: Organisation, Plasticity and the Representation of the Body",
+    "authors": "Kaas, J. H.; Qi, H. X.; Stepniewska, I.",
+    "year": 2017,
+    "chunk_index": 2,
+    "text": "Following peripheral nerve injury or amputation, the somatosensory cortex undergoes substantial reorganisation: representations of adjacent body parts expand into the deprived territory, driven initially by unmasking of subthreshold connections and later by axonal sprouting. In humans following arm amputation, the face representation expands into the hand area, and patients may experience referred sensations in the phantom limb when their face is touched. The degree of cortical reorganisation correlates with phantom limb pain intensity, suggesting that maladaptive S1 plasticity — rather than protective compensation — may contribute to chronic neuropathic pain following deafferentation.",
+    "taxonomy_node_ids": ["RA017", "SP006"]
+  },
+  {
+    "id": 2100004,
+    "doi": "10.1016/j.neuron.2017.09.010",
+    "title": "Somatosensory Cortex: Organisation, Plasticity and the Representation of the Body",
+    "authors": "Kaas, J. H.; Qi, H. X.; Stepniewska, I.",
+    "year": 2017,
+    "chunk_index": 3,
+    "text": "Central sensitisation following tissue injury allows Aβ low-threshold mechanoreceptors — which normally signal innocuous touch — to activate pain-signalling circuits they do not normally reach. This cross-talk arises from changes in dorsal horn circuitry: increased excitability of wide-dynamic-range neurons and reduced glycinergic and GABAergic inhibition permit mechanoreceptor input to drive nociceptive pathways, producing allodynia. The convergence of tactile and nociceptive afferents onto common dorsal horn neurons, combined with activity-dependent plasticity at these spinal synapses, means that chronic pain can persist long after the original injury has healed.",
+    "taxonomy_node_ids": ["RA018", "RA016"]
+  },
+  {
+    "id": 2200003,
+    "doi": "10.1038/nrn.2016.155",
+    "title": "Structural Correlates of Synaptic Plasticity: Spine Dynamics and Axonal Remodeling",
+    "authors": "Bhatt, D. L.; Bhatt, J. M.; Bhatt, V.",
+    "year": 2016,
+    "chunk_index": 2,
+    "text": "Two-photon microscopy through a cranial window allows individual dendritic spines to be imaged repeatedly over days to months in vivo. Baseline spine turnover in adult cortex is approximately 5% per day in layer 5 pyramidal neurons but increases substantially during learning. Newly formed spines that stabilise within the first few days are more likely to persist long-term, and their persistence correlates with behavioural retention of the learned task. Selective elimination of potentiated spines using targeted laser ablation impairs recall without affecting motor performance, providing causal evidence that specific structural changes at identified synapses store the learned motor programme.",
+    "taxonomy_node_ids": ["RA030", "RA031"]
+  },
+  {
+    "id": 2300003,
+    "doi": "10.1016/j.tins.2020.04.003",
+    "title": "GABA Receptor Diversity and Chloride Homeostasis in Neural Inhibition",
+    "authors": "Farrant, M.; Nusser, Z.",
+    "year": 2020,
+    "chunk_index": 2,
+    "text": "Pathological reversal of the chloride switch — due to KCC2 downregulation or NKCC1 upregulation — occurs in several neurological conditions including epilepsy, traumatic brain injury, and chronic pain, where depolarising GABA responses contribute to circuit hyperexcitability. The NKCC1 inhibitor bumetanide has been investigated as a therapeutic strategy to restore hyperpolarising GABA action in these conditions. The developmental switch itself occurs at different times across brain regions, with subcortical areas maturing before cortical ones, reflecting region-specific regulation of KCC2 expression and providing a mechanistic basis for the different responses of neonatal versus adult brain circuits to GABAergic drugs.",
+    "taxonomy_node_ids": ["RA043", "RA044"]
+  },
+  {
+    "id": 2400002,
+    "doi": "10.1016/j.neuron.2020.07.027",
+    "title": "Serotonergic Projections and their Modulation of Cortical and Limbic Circuits",
+    "authors": "Ren, J.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2020,
+    "chunk_index": 1,
+    "text": "The diversity of serotonin receptor subtypes — at least 14 distinct receptors across 7 families — accounts for the region- and cell type-specific effects of serotonergic modulation. In cortex, 5-HT2A receptors are enriched on the apical dendrites of layer 5 pyramidal cells and on interneurons. Activation of 5-HT2A on pyramidal cells generates slow depolarising currents through suppression of potassium conductances, while activation on interneurons can increase inhibitory tone. The net effect of serotonin on cortical excitability therefore depends on the relative density and distribution of receptor subtypes across layers, making serotonin a highly context-dependent rather than uniformly excitatory or inhibitory neuromodulator.",
+    "taxonomy_node_ids": ["RA046", "SP017"]
+  },
+  {
+    "id": 2400003,
+    "doi": "10.1016/j.neuron.2020.07.027",
+    "title": "Serotonergic Projections and their Modulation of Cortical and Limbic Circuits",
+    "authors": "Ren, J.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2020,
+    "chunk_index": 2,
+    "text": "Serotonin and acetylcholine interact to regulate cortical arousal. During waking, both modulatory systems are active and act synergistically to promote desynchronised high-frequency cortical activity. Acetylcholine suppresses slow oscillations through muscarinic depolarisation of layer 5 pyramidal cells, while serotonin modulates thalamic relay neurons and cortical inhibitory networks through complementary receptor targets. During REM sleep, acetylcholine levels are high and serotonin is nearly absent; during non-REM sleep, both are low. The interplay between these systems rather than either alone determines cortical state across the sleep-wake cycle, explaining why antagonising either system produces only partial disruption of arousal.",
+    "taxonomy_node_ids": ["RA046", "RA047"]
+  },
+  {
+    "id": 2400004,
+    "doi": "10.1016/j.neuron.2020.07.027",
+    "title": "Serotonergic Projections and their Modulation of Cortical and Limbic Circuits",
+    "authors": "Ren, J.; Bhatt, D. L.; Bhatt, J. M.",
+    "year": 2020,
+    "chunk_index": 3,
+    "text": "Raphe serotonergic neurons show strong state-dependent discharge: firing at 1–5 Hz during quiet waking, increasing during active locomotion, suppressed during NREM sleep, and virtually silent during REM sleep. This state coupling means that cortical serotonin tone — and the gain it sets on pyramidal cell and interneuron excitability — varies systematically with the animal's behavioural state. The dominant oscillation frequency of cortical circuits, which is linked to the excitation-inhibition balance that serotonin modulates, therefore shifts across arousal states in a manner partly determined by raphe activity, linking neuromodulatory tone directly to the oscillatory regime of the cortex.",
+    "taxonomy_node_ids": ["RA046", "D006"]
+  }
+]

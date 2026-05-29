@@ -1,0 +1,131 @@
+from_id,to_id,relationship_type,confidence,map_source,notes
+P001,SP001,HAS_SUBPILLAR,1.0,canonical,
+P001,SP002,HAS_SUBPILLAR,1.0,canonical,
+P001,SP003,HAS_SUBPILLAR,1.0,canonical,
+P002,SP004,HAS_SUBPILLAR,1.0,canonical,
+P002,SP005,HAS_SUBPILLAR,1.0,canonical,
+P002,SP006,HAS_SUBPILLAR,1.0,canonical,
+P003,SP007,HAS_SUBPILLAR,1.0,canonical,
+P003,SP008,HAS_SUBPILLAR,1.0,canonical,
+P004,SP009,HAS_SUBPILLAR,1.0,canonical,
+P004,SP010,HAS_SUBPILLAR,1.0,canonical,
+P004,SP011,HAS_SUBPILLAR,1.0,canonical,
+P005,SP012,HAS_SUBPILLAR,1.0,canonical,
+P005,SP013,HAS_SUBPILLAR,1.0,canonical,
+P005,SP014,HAS_SUBPILLAR,1.0,canonical,
+P006,SP015,HAS_SUBPILLAR,1.0,canonical,
+P006,SP016,HAS_SUBPILLAR,1.0,canonical,
+P006,SP017,HAS_SUBPILLAR,1.0,canonical,
+SP001,RA001,HAS_RESEARCH_AREA,1.0,canonical,
+SP001,RA002,HAS_RESEARCH_AREA,1.0,canonical,
+SP001,RA003,HAS_RESEARCH_AREA,1.0,canonical,
+SP002,RA004,HAS_RESEARCH_AREA,1.0,canonical,
+SP002,RA005,HAS_RESEARCH_AREA,1.0,canonical,
+SP002,RA006,HAS_RESEARCH_AREA,1.0,canonical,
+SP003,RA007,HAS_RESEARCH_AREA,1.0,canonical,
+SP003,RA008,HAS_RESEARCH_AREA,1.0,canonical,
+SP003,RA009,HAS_RESEARCH_AREA,1.0,canonical,
+SP004,RA010,HAS_RESEARCH_AREA,1.0,canonical,
+SP004,RA011,HAS_RESEARCH_AREA,1.0,canonical,
+SP004,RA012,HAS_RESEARCH_AREA,1.0,canonical,
+SP005,RA013,HAS_RESEARCH_AREA,1.0,canonical,
+SP005,RA014,HAS_RESEARCH_AREA,1.0,canonical,
+SP005,RA015,HAS_RESEARCH_AREA,1.0,canonical,
+SP006,RA016,HAS_RESEARCH_AREA,1.0,canonical,
+SP006,RA017,HAS_RESEARCH_AREA,1.0,canonical,
+SP006,RA018,HAS_RESEARCH_AREA,1.0,canonical,
+SP007,RA019,HAS_RESEARCH_AREA,1.0,canonical,
+SP007,RA020,HAS_RESEARCH_AREA,1.0,canonical,
+SP007,RA021,HAS_RESEARCH_AREA,1.0,canonical,
+SP008,RA022,HAS_RESEARCH_AREA,1.0,canonical,
+SP008,RA023,HAS_RESEARCH_AREA,1.0,canonical,
+SP008,RA024,HAS_RESEARCH_AREA,1.0,canonical,
+SP009,RA025,HAS_RESEARCH_AREA,1.0,canonical,
+SP009,RA026,HAS_RESEARCH_AREA,1.0,canonical,
+SP009,RA027,HAS_RESEARCH_AREA,1.0,canonical,
+SP010,RA028,HAS_RESEARCH_AREA,1.0,canonical,
+SP010,RA029,HAS_RESEARCH_AREA,1.0,canonical,
+SP011,RA030,HAS_RESEARCH_AREA,1.0,canonical,
+SP011,RA031,HAS_RESEARCH_AREA,1.0,canonical,
+SP012,RA032,HAS_RESEARCH_AREA,1.0,canonical,
+SP012,RA033,HAS_RESEARCH_AREA,1.0,canonical,
+SP012,RA034,HAS_RESEARCH_AREA,1.0,canonical,
+SP013,RA035,HAS_RESEARCH_AREA,1.0,canonical,
+SP013,RA036,HAS_RESEARCH_AREA,1.0,canonical,
+SP013,RA037,HAS_RESEARCH_AREA,1.0,canonical,
+SP014,RA038,HAS_RESEARCH_AREA,1.0,canonical,
+SP014,RA039,HAS_RESEARCH_AREA,1.0,canonical,
+SP014,RA040,HAS_RESEARCH_AREA,1.0,canonical,
+SP015,RA041,HAS_RESEARCH_AREA,1.0,canonical,
+SP015,RA042,HAS_RESEARCH_AREA,1.0,canonical,
+SP016,RA043,HAS_RESEARCH_AREA,1.0,canonical,
+SP016,RA044,HAS_RESEARCH_AREA,1.0,canonical,
+SP017,RA045,HAS_RESEARCH_AREA,1.0,canonical,
+SP017,RA046,HAS_RESEARCH_AREA,1.0,canonical,
+SP017,RA047,HAS_RESEARCH_AREA,1.0,canonical,
+SP001,D002,HAS_DIMENSION,1.0,canonical,
+SP002,D009,HAS_DIMENSION,1.0,canonical,
+SP002,D001,HAS_DIMENSION,0.95,canonical,
+SP003,D003,HAS_DIMENSION,0.90,canonical,
+SP009,D008,HAS_DIMENSION,1.0,canonical,
+SP010,D005,HAS_DIMENSION,0.90,canonical,
+SP015,D004,HAS_DIMENSION,0.92,canonical,
+SP012,D006,HAS_DIMENSION,1.0,canonical,
+SP001,D007,HAS_DIMENSION,0.88,semantic,
+P001,D010,HAS_DIMENSION,0.85,semantic,
+P001,T001,HAS_THEORY,1.0,canonical,
+P004,T002,HAS_THEORY,1.0,canonical,
+P002,T003,HAS_THEORY,0.88,canonical,
+P002,T004,HAS_THEORY,0.88,canonical,
+P005,T005,HAS_THEORY,1.0,canonical,
+P002,T006,HAS_THEORY,0.90,canonical,
+P003,T007,HAS_THEORY,1.0,canonical,
+P002,T008,HAS_THEORY,1.0,canonical,
+P004,T009,HAS_THEORY,0.88,canonical,
+P002,T010,HAS_THEORY,0.85,semantic,
+T001,RA001,EXPLAINS,0.97,canonical,Hodgkin-Huxley model describes voltage-gated channel kinetics as its core mathematical variables
+T001,RA002,EXPLAINS,0.93,canonical,Hodgkin-Huxley equations predict the shape and velocity of propagating action potentials
+T002,RA025,EXPLAINS,0.95,canonical,Hebbian learning rule provides the theoretical basis for activity-dependent LTP
+T002,RA027,EXPLAINS,0.92,canonical,STDP is a temporally precise implementation of the Hebbian learning rule
+T003,RA019,EXPLAINS,0.85,canonical,Rate coding theory interprets motor cortex firing rates as encoding movement parameters
+T004,RA033,EXPLAINS,0.88,canonical,Temporal coding theory is instantiated in theta phase coding of sequential information
+T005,RA032,EXPLAINS,0.93,canonical,Binding by synchrony theory assigns the binding function to gamma-band synchronisation
+T006,RA011,EXPLAINS,0.90,canonical,Critical period theory explains the dependence of orientation selectivity development on early visual experience
+T007,RA021,EXPLAINS,0.97,canonical,Population vector theory directly formalises the decoding of movement direction from population activity
+T008,RA010,EXPLAINS,0.88,canonical,Lateral inhibition explains centre-surround organisation of retinal ganglion cell receptive fields
+T008,RA011,EXPLAINS,0.85,canonical,Lateral inhibition through cortical interneurons sharpens orientation tuning in primary visual cortex
+T009,RA025,EXPLAINS,0.86,canonical,Three-factor rule extends Hebbian LTP by requiring a neuromodulatory eligibility signal
+T009,RA045,EXPLAINS,0.88,canonical,Three-factor rule identifies dopamine as the third factor gating corticostriatal plasticity
+T010,RA010,EXPLAINS,0.80,semantic,Predictive coding frames retinal signals as prediction errors relative to expectations
+T010,RA012,EXPLAINS,0.87,canonical,Predictive coding accounts for hierarchical visual processing as inference over generative models
+RA001,RA002,RELATED_TO,0.90,canonical,Channel kinetics directly determine the shape and propagation speed of the action potential
+RA002,RA003,RELATED_TO,0.88,canonical,Saltatory conduction is the mechanism by which myelination increases action potential propagation velocity
+RA004,RA005,RELATED_TO,0.92,canonical,Vesicle release delivers neurotransmitter that directly activates postsynaptic receptors
+RA005,RA006,RELATED_TO,0.85,canonical,Receptor activation is terminated by reuptake clearing transmitter from the cleft
+RA007,RA008,RELATED_TO,0.82,canonical,Temporal and spatial summation are complementary integration mechanisms that together determine spike threshold
+RA009,RA007,RELATED_TO,0.78,semantic,Dendritic computation enables nonlinear forms of temporal summation not possible with passive membranes
+RA010,RA011,RELATED_TO,0.80,semantic,Retinal contrast signals are the input that drives orientation-selective responses in V1
+RA011,RA012,RELATED_TO,0.88,canonical,Orientation-selective V1 neurons provide the feature inputs that are combined along the ventral stream
+RA013,RA014,RELATED_TO,0.90,canonical,Cochlear place coding of frequency is the physical basis of tonotopic organisation throughout the auditory pathway
+RA014,RA015,RELATED_TO,0.72,semantic,Tonotopic organisation at the superior olive is a prerequisite for frequency-dependent sound localisation computations
+RA019,RA020,RELATED_TO,0.88,canonical,Motor cortex topography determines the somatotopic origin of corticospinal tract projections
+RA021,RA020,RELATED_TO,0.85,canonical,Population vector coding describes the signal transmitted by the corticospinal tract to spinal motor neurons
+RA022,RA024,RELATED_TO,0.83,canonical,Basal ganglia output is relayed to motor cortex via thalamocortical loops to implement action selection
+RA023,RA024,RELATED_TO,0.80,canonical,Cerebellar error signals reach motor cortex via thalamic relay to adjust ongoing movement commands
+RA025,RA026,RELATED_TO,0.85,canonical,LTP and LTD are bidirectional plasticity mechanisms operating at the same synapses through shared molecular pathways
+RA025,RA030,RELATED_TO,0.82,semantic,LTP induction is accompanied by rapid enlargement of dendritic spines providing structural correlate
+RA0027,RA025,IS_DERIVED_FROM,0.88,canonical,STDP is the temporally precise form of LTP governed by the relative timing of pre- and postsynaptic spikes
+RA028,RA029,RELATED_TO,0.80,canonical,Synaptic scaling and intrinsic excitability regulation are complementary homeostatic mechanisms maintaining stable firing
+RA030,RA031,RELATED_TO,0.75,semantic,Spine remodeling and axonal sprouting jointly reshape circuit connectivity during learning and development
+RA032,RA038,RELATED_TO,0.85,canonical,Gamma oscillations are generated by the synchronised firing of fast-spiking parvalbumin interneurons
+RA033,RA034,RELATED_TO,0.78,semantic,Hippocampal theta rhythms during active exploration transition to sharp-wave ripples during sleep consolidation
+RA034,RA025,RELATED_TO,0.75,semantic,Sleep sharp-wave ripples reactivate LTP-dependent memory traces to drive systems-level consolidation
+RA035,RA037,RELATED_TO,0.80,canonical,Cortical columns are vertical units that span all six laminar layers and share input-output organisation
+RA036,RA019,RELATED_TO,0.77,semantic,Motor cortex topographic mapping is the organisational principle underlying the somatotopic corticospinal projection
+RA038,RA039,RELATED_TO,0.83,canonical,Parvalbumin interneurons that generate gamma oscillations also implement feedforward inhibition at excitatory synapses
+RA039,RA040,RELATED_TO,0.76,semantic,Feedforward and feedback inhibition together define the temporal window and gain of local excitatory activity
+RA041,RA042,RELATED_TO,0.90,canonical,AMPA receptor trafficking controls basal synaptic strength while NMDA receptors gate plasticity induction
+RA043,RA044,RELATED_TO,0.82,canonical,GABA receptor subtype determines whether GABA-A currents are inhibitory or excitatory depending on chloride homeostasis
+RA045,RA046,RELATED_TO,0.70,semantic,Dopaminergic and serotonergic systems exert complementary modulatory effects on cortical and limbic circuit gain
+RA047,RA032,RELATED_TO,0.74,semantic,Cholinergic modulation suppresses slow oscillations and promotes gamma-band activity during active processing states
+RA003,D007,RELATED_TO,0.85,canonical,Saltatory conduction efficiency is the primary functional consequence of axonal myelination density

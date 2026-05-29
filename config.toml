@@ -1,0 +1,51 @@
+# Neurohive pipeline configuration
+# ------------------------------------
+# Values here are project defaults. Override them in three ways (highest priority first):
+#   1. CLI flags:           --model, --node-top-k, --chunk-top-k, etc.
+#   2. Environment / .env:  ANTHROPIC_MODEL, ANTHROPIC_API_KEY
+#   3. This file:           the values below
+
+[pipeline]
+# Number of taxonomy nodes and paper chunks fetched by the retriever per query.
+node_top_k  = 6
+chunk_top_k = 6
+
+# Minimum edge confidence for graph expansion.  Edges below this threshold are
+# not followed during smart_expand().  Hierarchy edges (HAS_SUBPILLAR,
+# HAS_RESEARCH_AREA) always have confidence 1.0 and are unaffected.  The
+# threshold mainly filters weak RELATED_TO edges (range 0.70–0.92, all semantic).
+# Set to 0.0 to disable filtering and follow all edges regardless of confidence.
+confidence_threshold = 0.8
+
+[anthropic]
+# Anthropic model ID.
+# Override with the ANTHROPIC_MODEL environment variable or the --model CLI flag.
+model = "claude-haiku-4-5-20251001"
+
+[embeddings]
+# sentence-transformers model used for hybrid BM25 + dense retrieval.
+# The model is saved to models/<model_name>/ by scripts/download_model.py.
+# Change this only if you want a different embedding model; the download
+# script reads this value automatically.
+model = "sentence-transformers/all-MiniLM-L6-v2"
+
+[nli]
+# Cross-encoder model for post-generation entailment verification.
+# For each cited claim in the answer, the model checks whether the claim is
+# entailed by the actual source text (PaperChunk.text or Node.description).
+# Enabled at runtime with --verify or verify_entailment=True.
+# Requires: make setup-nli && make download-nli-model
+#
+# Recommended model (best quality/speed balance on CPU, ~568 MB):
+model = "cross-encoder/nli-deberta-v3-small"
+#
+# Faster alternatives (lower accuracy):
+#   "cross-encoder/nli-deberta-v3-xsmall"   ~283 MB  — good balance
+#   "cross-encoder/nli-MiniLM2-L6-H768"     ~328 MB  — very popular
+#   "cross-encoder/nli-distilroberta-base"  ~328 MB  — stable, widely used
+#
+# Minimum entailment probability (post-softmax) for a claim to pass.
+# Claims below this threshold emit a UserWarning.
+entailment_threshold = 0.5
+
+

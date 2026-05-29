@@ -1,0 +1,93 @@
+id,name,type,description,source
+P001,Neural_Signaling,Pillar,"Electrochemical mechanisms by which neurons generate and transmit electrical signals along axons and across synapses.",v1
+P002,Sensory_Systems,Pillar,"Neural pathways and cortical circuits that transform peripheral sensory signals into structured internal representations.",v1
+P003,Motor_Systems,Pillar,"Cortical, subcortical, and spinal circuits that plan, initiate, and execute voluntary and reflexive movement.",v1
+P004,Synaptic_Plasticity,Pillar,"Activity-dependent mechanisms by which synaptic strength and neural circuit connectivity are modified in response to experience.",v1
+P005,Neural_Circuits_and_Oscillations,Pillar,"The organisation of neurons into functional networks and the rhythmic population-level dynamics that coordinate information processing.",v1
+P006,Neurochemistry,Pillar,"Molecular mechanisms of neurotransmitter synthesis, release, receptor binding, and neuromodulatory signalling that govern neural function.",v1
+SP001,Electrical_Signaling,Subpillar,"The biophysical basis of neuronal excitability, including resting membrane potential, action potential generation, and signal propagation.",v1
+SP002,Synaptic_Transmission,Subpillar,"The sequence of events at the synapse from presynaptic action potential to postsynaptic receptor activation and signal termination.",v1
+SP003,Neural_Integration,Subpillar,"The spatial and temporal summation of synaptic inputs at the dendrite and soma that determines whether a neuron reaches firing threshold.",v1
+SP004,Visual_Processing,Subpillar,"The transformation of photoreceptor activation into increasingly complex cortical representations of luminance, orientation, motion, and object identity.",v1
+SP005,Auditory_Processing,Subpillar,"The encoding of sound frequency, intensity, and timing from cochlear hair cells through brainstem nuclei to auditory cortex.",v1
+SP006,Somatosensory_Processing,Subpillar,"The encoding and central representation of touch, pressure, proprioception, and pain from peripheral receptors to somatosensory cortex.",v1
+SP007,Cortical_Motor_Control,Subpillar,"The role of motor and premotor cortex in encoding movement parameters and transmitting commands via descending pathways.",v1
+SP008,Subcortical_Motor_Circuits,Subpillar,"Contributions of the basal ganglia, cerebellum, and thalamus to action selection, movement coordination, and error correction.",v1
+SP009,Activity_Dependent_Plasticity,Subpillar,"Hebbian and anti-Hebbian forms of long-lasting synaptic change driven by correlated pre- and postsynaptic activity.",v1
+SP010,Homeostatic_Plasticity,Subpillar,"Compensatory mechanisms that stabilise neuronal firing rates and maintain network dynamics within functional ranges.",v1
+SP011,Structural_Plasticity,Subpillar,"Changes in the morphology of dendritic spines, axonal arbors, and synaptic contact sites as substrates for long-term circuit modification.",v1
+SP012,Network_Oscillations,Subpillar,"Synchronised rhythmic activity across neural populations at characteristic frequencies, reflecting circuit dynamics and coordinating inter-area communication.",v1
+SP013,Cortical_Architecture,Subpillar,"The laminar, columnar, and areal organisation of the neocortex and its implications for input-output routing and local circuit computation.",v1
+SP014,Inhibitory_Circuits,Subpillar,"The morphologically and physiologically diverse GABAergic interneurons that shape network dynamics through feedforward and feedback inhibition.",v1
+SP015,Excitatory_Neurotransmission,Subpillar,"Glutamate-mediated fast excitatory signalling through ionotropic receptors and its role in synaptic strength and plasticity.",v1
+SP016,Inhibitory_Neurotransmission,Subpillar,"GABA-mediated inhibitory signalling through ionotropic and metabotropic receptors and its role in network stabilisation and oscillations.",v1
+SP017,Neuromodulatory_Systems,Subpillar,"Diffuse ascending projections using dopamine, serotonin, acetylcholine, and norepinephrine that regulate neural gain and circuit state.",v1
+RA001,Voltage_Gated_Channel_Kinetics,Research_area,"The voltage-dependent opening and closing dynamics of sodium, potassium, and calcium channels that underlie action potential generation and repolarisation.",v1
+RA002,Action_Potential_Propagation,Research_area,"The active spread of an action potential along the axon, maintained by successive activation of voltage-gated sodium channels ahead of the impulse.",v1
+RA003,Saltatory_Conduction,Research_area,"The rapid propagation of action potentials in myelinated axons through discrete jumps between nodes of Ranvier, dramatically increasing conduction velocity.",v1
+RA004,Vesicle_Release_Mechanisms,Research_area,"Calcium-triggered SNARE-mediated fusion of synaptic vesicles with the presynaptic membrane, releasing neurotransmitter into the synaptic cleft.",v1
+RA005,Postsynaptic_Receptor_Activation,Research_area,"The binding of released neurotransmitter to ionotropic and metabotropic receptors on the postsynaptic membrane, producing changes in conductance and second-messenger signalling.",v1
+RA006,Neurotransmitter_Reuptake,Research_area,"The clearance of released neurotransmitter from the synaptic cleft through transporter-mediated reuptake into presynaptic terminals and surrounding glia.",v1
+RA007,Temporal_Summation,Research_area,"The integration of successive subthreshold postsynaptic potentials within a short time window, enabling suprathreshold excitation from high-frequency presynaptic input.",v1
+RA008,Spatial_Summation,Research_area,"The simultaneous integration of inputs from multiple synaptic locations along the dendritic tree, enabling suprathreshold excitation from spatially distributed input.",v1
+RA009,Dendritic_Computation,Research_area,"Active conductances in dendrites that enable nonlinear integration, local processing, and coincidence detection independent of the soma.",v1
+RA010,Retinal_Encoding,Research_area,"The transformation of photoreceptor signals by retinal interneurons into ganglion cell spike trains, generating centre-surround receptive fields sensitive to contrast.",v1
+RA011,Orientation_Selectivity,Research_area,"The tuning of primary visual cortex neurons to the angle of elongated stimuli, arising from the arrangement of thalamic inputs and local cortical circuits.",v1
+RA012,Ventral_Stream_Processing,Research_area,"The hierarchical transformation of visual representations along the occipito-temporal pathway from simple features in V1 to complex object representations in IT cortex.",v1
+RA013,Cochlear_Transduction,Research_area,"The mechanoelectrical conversion of sound-induced basilar membrane displacement into hair cell receptor potentials and auditory nerve firing.",v1
+RA014,Tonotopic_Organisation,Research_area,"The spatial mapping of sound frequency along the basilar membrane and preserved at successive levels of the auditory pathway including primary auditory cortex.",v1
+RA015,Sound_Localisation,Research_area,"The computation of sound source azimuth and elevation from interaural time and level differences by brainstem nuclei including the medial superior olive.",v1
+RA016,Mechanoreceptor_Subtypes,Research_area,"The four classes of low-threshold mechanoreceptors in glabrous skin — Meissner, Merkel, Ruffini, and Pacinian corpuscles — each tuned to distinct tactile features.",v1
+RA017,Somatosensory_Cortex_Organisation,Research_area,"The somatotopic map of body surface in primary somatosensory cortex, with representational area scaling with receptor density rather than body-surface area.",v1
+RA018,Nociception,Research_area,"The transduction of noxious thermal, mechanical, and chemical stimuli by nociceptors and their transmission via Aδ and C fibres to the dorsal horn and brain.",v1
+RA019,Motor_Cortex_Topography,Research_area,"The somatotopic organisation of primary motor cortex encoding of voluntary movement, with representation area scaling with movement precision rather than muscle mass.",v1
+RA020,Corticospinal_Tract,Research_area,"The direct descending projection from motor cortex to spinal motor neurons, enabling fine voluntary control of distal limb musculature.",v1
+RA021,Population_Vector_Coding,Research_area,"The representation of intended movement direction by the weighted sum of preferred-direction vectors across a population of motor cortex neurons.",v1
+RA022,Basal_Ganglia_Action_Selection,Research_area,"The role of direct and indirect striato-pallidal pathways in selecting motor programmes and suppressing competing actions through inhibitory gating of thalamus.",v1
+RA023,Cerebellar_Error_Correction,Research_area,"The use of climbing fibre-encoded error signals to adjust Purkinje cell responses, enabling the cerebellum to refine motor timing and correct movement errors.",v1
+RA024,Thalamocortical_Motor_Loops,Research_area,"The reciprocal connections between motor thalamic nuclei and cortex that relay basal ganglia and cerebellar output to motor and premotor cortex.",v1
+RA025,Long_Term_Potentiation,Research_area,"The persistent strengthening of a synapse following high-frequency stimulation or correlated pre- and postsynaptic activity, dependent on NMDA receptor activation.",v1
+RA026,Long_Term_Depression,Research_area,"The persistent weakening of a synapse following low-frequency stimulation or temporally uncorrelated activity, often mediated by mGluR or NMDA receptor activation.",v1
+RA027,Spike_Timing_Dependent_Plasticity,Research_area,"The asymmetric plasticity rule in which synapses strengthen when the presynaptic spike precedes postsynaptic firing and weaken when the order is reversed.",v1
+RA028,Synaptic_Scaling,Research_area,"The global multiplicative adjustment of all synaptic strengths in a neuron in response to prolonged changes in activity, maintaining firing rates within a functional range.",v1
+RA029,Intrinsic_Excitability_Regulation,Research_area,"Homeostatic changes in voltage-gated channel expression and membrane conductance that adjust a neuron's input-output gain following sustained perturbations in activity.",v1
+RA030,Dendritic_Spine_Remodeling,Research_area,"Activity-dependent changes in the size, shape, and number of dendritic spines that alter synaptic strength and provide a structural correlate of plasticity.",v1
+RA031,Axonal_Sprouting_and_Pruning,Research_area,"The growth of new axonal branches and elimination of redundant projections during development and in response to learning, reshaping circuit connectivity.",v1
+RA032,Gamma_Oscillations,Research_area,"Synchronised oscillations in the 30–80 Hz range arising from interneuron-pyramidal cell interactions, implicated in local computation and inter-area binding.",v1
+RA033,Theta_Rhythms,Research_area,"Oscillations in the 4–12 Hz range prominent in hippocampus and entorhinal cortex during active exploration, organising sequential neural activity and spatial coding.",v1
+RA034,Sleep_Oscillations,Research_area,"The stereotyped sequence of slow oscillations, sleep spindles, and sharp-wave ripples during non-REM sleep, supporting memory consolidation through hippocampal-cortical dialogue.",v1
+RA035,Cortical_Lamination,Research_area,"The organisation of neocortex into six layers with distinct cell types, connectivity profiles, and input-output relationships defining canonical cortical circuits.",v1
+RA036,Topographic_Mapping,Research_area,"The systematic spatial correspondence between the arrangement of neurons in cortical areas and the spatial or feature organisation of their inputs.",v1
+RA037,Cortical_Columns,Research_area,"Vertical modules of neurons sharing similar response properties, arising from common thalamic input and local intracortical circuitry, observed across sensory and motor areas.",v1
+RA038,GABAergic_Interneuron_Diversity,Research_area,"The multiple morphological and electrophysiological classes of cortical inhibitory interneurons — including parvalbumin, somatostatin, and VIP subtypes — with distinct circuit roles.",v1
+RA039,Feedforward_Inhibition,Research_area,"Inhibitory postsynaptic potentials evoked by the same afferent pathway that drives excitation, restricting the temporal window for integration and limiting polysynaptic spread.",v1
+RA040,Feedback_Inhibition,Research_area,"Inhibition driven by the output of a local excitatory neuron onto itself or its neighbours via interneurons, implementing gain control and preventing runaway excitation.",v1
+RA041,AMPA_Receptor_Dynamics,Research_area,"The rapid kinetics and regulated surface trafficking of AMPA receptors at the postsynaptic density, which determine the amplitude and expression of synaptic plasticity.",v1
+RA042,NMDA_Receptor_Function,Research_area,"The voltage- and ligand-gated properties of NMDA receptors that detect coincident pre- and postsynaptic activity, serving as a molecular coincidence detector for plasticity induction.",v1
+RA043,GABA_Receptor_Subtypes,Research_area,"The pharmacological and biophysical diversity of GABA-A and GABA-B receptors, determining the kinetics and spatial spread of inhibitory postsynaptic currents.",v1
+RA044,Chloride_Homeostasis,Research_area,"The regulation of intracellular chloride concentration by KCC2 and NKCC1 co-transporters, which sets the reversal potential of GABA-A mediated currents and determines whether GABA is inhibitory or excitatory.",v1
+RA045,Dopaminergic_Pathways,Research_area,"The mesolimbic, mesocortical, and nigrostriatal dopaminergic projections from ventral tegmental area and substantia nigra, modulating striatal and prefrontal circuit function.",v1
+RA046,Serotonergic_Circuits,Research_area,"Projections from raphe nuclei to virtually all brain regions, modulating arousal, mood, and sensory gain through G-protein-coupled serotonin receptors.",v1
+RA047,Cholinergic_Modulation,Research_area,"Basal forebrain and brainstem cholinergic projections that enhance cortical signal-to-noise ratio and regulate arousal state through muscarinic and nicotinic receptor activation.",v1
+D001,Synaptic_Strength,Dimension,"The amplitude of the postsynaptic potential produced by a single presynaptic action potential, determined by vesicle release probability and receptor number and conductance.",v1
+D002,Conduction_Velocity,Dimension,"The speed at which action potentials propagate along an axon, determined by axon diameter and degree of myelination.",v1
+D003,Excitation_Inhibition_Balance,Dimension,"The ratio of excitatory to inhibitory synaptic drive impinging on a neuron or local network, which sets the operating point for information processing and neural gain.",v1
+D004,Receptor_Sensitivity,Dimension,"The magnitude of postsynaptic current per unit of neurotransmitter concentration, determined by receptor density, subunit composition, and state-dependent modulation.",v1
+D005,Neural_Gain,Dimension,"The steepness of the input-output transfer function relating injected current to firing rate, which determines how sharply a neuron responds to changes in input strength.",v1
+D006,Oscillation_Frequency,Dimension,"The dominant frequency of synchronised neural population activity in a given circuit, shaped by interneuron time constants and conduction delays.",v1
+D007,Myelination_Density,Dimension,"The degree of axonal myelination across a fibre tract, which determines conduction velocity and metabolic efficiency of long-range signalling.",v1
+D008,Plasticity_Threshold,Dimension,"The minimum level of correlated synaptic co-activation required to trigger long-term potentiation, set by postsynaptic calcium dynamics and kinase activity.",v1
+D009,Release_Probability,Dimension,"The probability that a presynaptic action potential triggers vesicle fusion at a given synapse, a major determinant of short-term synaptic dynamics.",v1
+D010,Spontaneous_Firing_Rate,Dimension,"The baseline discharge rate of a neuron in the absence of specific input, reflecting tonic excitatory drive and intrinsic membrane properties.",v1
+T001,Hodgkin_Huxley_Model,Theory,"A conductance-based mathematical model describing action potential generation in terms of voltage-dependent sodium and potassium channel kinetics, derived from squid giant axon recordings.",v1
+T002,Hebbian_Learning_Rule,Theory,"The principle that synaptic strength increases when a presynaptic neuron persistently and repeatedly contributes to the firing of a postsynaptic neuron, providing a cellular basis for associative learning.",v1
+T003,Rate_Coding,Theory,"The hypothesis that neurons encode information primarily in their mean firing rate, with stimulus identity or intensity represented by the average number of spikes per unit time.",v1
+T004,Temporal_Coding,Theory,"The hypothesis that information is encoded in the precise timing of individual spikes or patterns of spike timing relative to a reference signal such as an oscillation.",v1
+T005,Binding_by_Synchrony,Theory,"The proposal that features of a perceptual object encoded in spatially distributed neurons are bound into a unified representation through synchronised gamma-band oscillations.",v1
+T006,Critical_Period_Theory,Theory,"The framework describing developmental windows of heightened synaptic plasticity during which sensory experience shapes cortical circuits, after which modification requires greater perturbation.",v1
+T007,Population_Vector_Theory,Theory,"The theory that motor cortex encodes intended movement direction as the vector sum of preferred-direction vectors weighted by the firing rate of each participating neuron.",v1
+T008,Lateral_Inhibition,Theory,"The principle that activation of a neuron suppresses its neighbours via inhibitory interneurons, sharpening spatial tuning, enhancing contrast, and preventing activity spread.",v1
+T009,Three_Factor_Learning_Rule,Theory,"An extension of Hebbian plasticity in which synaptic modification requires a third neuromodulatory signal — such as dopamine or acetylcholine — in addition to correlated pre- and postsynaptic activity.",v1
+T010,Predictive_Coding,Theory,"The theory that the brain generates hierarchical predictions about sensory input and transmits only precision-weighted prediction errors upward, minimising redundant signalling.",v1
+RA048,Cortical_Remyelination,Research_area,"The restoration of myelin sheaths to previously demyelinated axons through the differentiation and maturation of oligodendrocyte precursor cells.",v1
+D011,Firing_Rate_Variability,Dimension,"The trial-to-trial variability in neuronal spike count for repeated identical stimuli, reflecting intrinsic stochasticity and network-level fluctuations.",v1
