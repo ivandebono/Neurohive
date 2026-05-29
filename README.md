@@ -173,8 +173,23 @@ echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 ### Optional: hybrid retrieval (BM25 + dense)
 
 ```bash
-make setup-embeddings
-make download-model   # downloads ~90 MB; activates hybrid mode automatically
+make setup-embeddings   # installs sentence-transformers and downloads the model (~90 MB)
+```
+
+Hybrid mode activates automatically on the next run — no code changes needed.
+
+### Optional: NLI entailment verification
+
+```bash
+make setup-nli   # installs sentence-transformers and downloads the cross-encoder (~568 MB)
+```
+
+Pass `--verify` at the CLI to enable post-generation entailment checking.
+
+### Optional: both at once
+
+```bash
+make setup-embeddings-nli   # installs and downloads both models in one step
 ```
 
 ---
@@ -216,7 +231,7 @@ Retrieval parameters (`node_top_k`, `chunk_top_k`, `confidence_threshold`) are s
 |---|---|---|
 | `--model` | from config.toml | Anthropic model ID (also reads `ANTHROPIC_MODEL` env var) |
 | `--show-sources` | off | Print retrieved nodes and chunks after the answer |
-| `--verify` | off | Enable NLI entailment verification (requires `make setup-nli`) |
+| `--verify` | off | Enable NLI entailment verification (requires `make setup-nli` or `make setup-embeddings-nli`) |
 | `--debug` | off | Print raw model triples before verification |
 
 ### Python API

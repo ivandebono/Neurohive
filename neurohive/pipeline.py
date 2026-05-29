@@ -460,7 +460,7 @@ class QueryPipeline:
             if best_entailment < self._nli_threshold:
                 warnings.warn(
                     f"Low entailment score ({best_entailment:.0%}) for claim "
-                    f"[{citation}]: {claim[:120]!r}",
+                    f"[{citation}]: {repr(claim[:120] + '...' if len(claim) > 120 else claim)}",
                     stacklevel=3,
                 )
 

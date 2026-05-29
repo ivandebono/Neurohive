@@ -1,4 +1,4 @@
-.PHONY: help setup setup-embeddings download-model setup-nli download-nli-model graph clean
+.PHONY: help setup setup-embeddings setup-nli setup-embeddings-nli download-model download-nli-model graph clean
 
 ## Show this help message
 help:
@@ -6,8 +6,9 @@ help:
 	@echo ""
 	@echo "  Setup"
 	@echo "    setup               Install core dependencies (Anthropic API)"
-	@echo "    setup-embeddings    Add sentence-transformers for hybrid BM25 + dense retrieval"
+	@echo "    setup-embeddings    Install sentence-transformers + download embedding model"
 	@echo "    setup-nli           Install NLI deps + download cross-encoder model"
+	@echo "    setup-embeddings-nli Install both embedding and NLI models in one step"
 	@echo "                        NLI verification is OFF by default; pass --verify to enable"
 	@echo ""
 	@echo "  Models"
@@ -28,10 +29,18 @@ setup:
 	uv sync --no-dev
 	uv pip install -e .
 
-## Add sentence-transformers for hybrid BM25 + dense retrieval
+## Add sentence-transformers for hybrid BM25 + dense retrieval, then download the model
 setup-embeddings:
 	uv sync --extra embeddings
 	uv pip install -e .
+	uv run python scripts/download_model.py
+
+## Install both sentence-transformers and NLI deps, then download both models
+setup-embeddings-nli:
+	uv sync --extra embeddings --extra nli
+	uv pip install -e .
+	uv run python scripts/download_model.py
+	uv run python scripts/download_nli_model.py
 
 ## Download embedding model from config.toml and enable hybrid retrieval automatically
 download-model:
