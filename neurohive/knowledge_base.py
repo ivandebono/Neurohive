@@ -1,72 +1,193 @@
-"""Loads the three data files and builds in-memory indices for fast lookup."""
+"""SQLite-backed store for nodes, edges, and paper chunks with graph/retrieval helpers.
+
+Raw source files live in ``data/raw/``.  The database is written to
+``data/database/neurohive.db`` and auto-populated on first run.  Delete the
+``.db`` file to force a rebuild from the raw files.
+
+Full-table reads (``nodes``, ``edges``, ``chunks``) are cached once per session
+because the Retriever needs them at startup to build BM25 and dense indices.
+Per-query lookups (adjacency, breadcrumb walks, chunk fetches) go through
+indexed SQL queries.
+"""
 
 from __future__ import annotations
 
-from collections import defaultdict
+import sqlite3
 from pathlib import Path
 
 from neurohive.models import Edge, Node, PaperChunk
 
-# Six of the seven edge types are directed (source → target is meaningful).
-# RELATED_TO is the only bidirectional edge and must be traversed in both
-# incoming and outgoing directions during graph expansion.
 _BIDIRECTIONAL_EDGE_TYPES = frozenset({"RELATED_TO"})
-
-# Strict Pillar → Subpillar → Research_area spine, used only for ancestor
-# walks (breadcrumbs). Subset of the six directed edge types.
 _HIERARCHY_EDGE_TYPES = frozenset({"HAS_SUBPILLAR", "HAS_RESEARCH_AREA"})
-
-# All relationship types with explicit traversal logic in smart_expand.
-# Any type absent from this set is treated as bidirectional (safe default).
 _KNOWN_RELATIONSHIP_TYPES = (
     _HIERARCHY_EDGE_TYPES
     | _BIDIRECTIONAL_EDGE_TYPES
     | frozenset({"HAS_DIMENSION", "HAS_THEORY", "EXPLAINS", "IS_DERIVED_FROM"})
 )
 
+_SCHEMA = """
+PRAGMA journal_mode = WAL;
+CREATE TABLE IF NOT EXISTS nodes (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    type        TEXT NOT NULL,
+    description TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS edges (
+    id                INTEGER PRIMARY KEY,
+    from_id           TEXT NOT NULL,
+    to_id             TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,
+    confidence        REAL NOT NULL,
+    map_source        TEXT NOT NULL,
+    notes             TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_edges_from ON edges(from_id);
+CREATE INDEX IF NOT EXISTS idx_edges_to   ON edges(to_id);
+CREATE TABLE IF NOT EXISTS chunks (
+    id          INTEGER PRIMARY KEY,
+    doi         TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    authors     TEXT NOT NULL,
+    year        INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    text        TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS chunk_nodes (
+    chunk_id INTEGER NOT NULL,
+    node_id  TEXT    NOT NULL,
+    PRIMARY KEY (chunk_id, node_id)
+);
+CREATE INDEX IF NOT EXISTS idx_chunk_nodes_node ON chunk_nodes(node_id);
+"""
+
 
 class KnowledgeBase:
     """
-    In-memory store for nodes, edges, and paper chunks with pre-built indices.
+    SQLite-backed store for nodes, edges, and paper chunks.
 
-    Indices built at construction time
-    -----------------------------------
-    nodes_by_id      : dict[str, Node]
-    outgoing         : node_id → edges where that node is `from_id`
-    incoming         : node_id → edges where that node is `to_id`
-    node_to_chunks   : node_id → chunks that list that node in taxonomy_node_ids
-    chunks_by_id     : chunk.id → PaperChunk
+    Full-table reads (``nodes``, ``edges``, ``chunks``) are cached for the
+    lifetime of the instance — they are needed once at startup to build BM25
+    and dense retrieval indices.  All other access (node/edge lookups,
+    graph expansion, chunk fetches) runs as indexed SQL queries.
 
     Parameters
     ----------
-    data_dir : Directory containing the three data files.
+    data_dir : Project data directory.  Raw source files are read from
+               ``data_dir/raw/``; the SQLite database is written to
+               ``data_dir/database/neurohive.db``.
     """
 
     def __init__(self, data_dir: Path | str):
         data_dir = Path(data_dir)
+        self._raw_dir = data_dir / "raw"
+        db_path = data_dir / "database" / "neurohive.db"
+        db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        nodes = Node.load_all(data_dir / "taxonomy_nodes.csv")
-        edges = Edge.load_all(data_dir / "taxonomy_edges.csv")
-        chunks = PaperChunk.load_all(data_dir / "paper_chunks.json")
+        self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        self._conn.executescript(_SCHEMA)
 
-        self.nodes_by_id: dict[str, Node] = {n.id: n for n in nodes}
-        self.nodes: list[Node] = nodes
-        self.edges: list[Edge] = edges
-        self.chunks: list[PaperChunk] = chunks
+        if self._conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0] == 0:
+            self._ingest()
 
-        # Adjacency indices
-        self.outgoing: dict[str, list[Edge]] = defaultdict(list)
-        self.incoming: dict[str, list[Edge]] = defaultdict(list)
-        for edge in edges:
-            self.outgoing[edge.from_id].append(edge)
-            self.incoming[edge.to_id].append(edge)
+        # Session caches for full-table reads (populated on first access)
+        self._nodes_cache: list[Node] | None = None
+        self._edges_cache: list[Edge] | None = None
+        self._chunks_cache: list[PaperChunk] | None = None
 
-        # Chunk indices
-        self.chunks_by_id: dict[int, PaperChunk] = {c.id: c for c in chunks}
-        self.node_to_chunks: dict[str, list[PaperChunk]] = defaultdict(list)
-        for chunk in chunks:
-            for nid in chunk.taxonomy_node_ids:
-                self.node_to_chunks[nid].append(chunk)
+        # Dict-like proxies that match the old attribute interface
+        self.nodes_by_id = _NodeIndex(self)
+        self.outgoing    = _EdgeIndex(self._conn, self._to_edge, "from_id")
+        self.incoming    = _EdgeIndex(self._conn, self._to_edge, "to_id")
+
+    # ------------------------------------------------------------------
+    # Ingestion
+    # ------------------------------------------------------------------
+
+    def _ingest(self) -> None:
+        """Populate the database from the raw source files."""
+        nodes  = Node.load_all(self._raw_dir / "taxonomy_nodes.csv")
+        edges  = Edge.load_all(self._raw_dir / "taxonomy_edges.csv")
+        chunks = PaperChunk.load_all(self._raw_dir / "paper_chunks.json")
+
+        with self._conn:
+            self._conn.executemany(
+                "INSERT INTO nodes(id, name, type, description) VALUES(?,?,?,?)",
+                [(n.id, n.name, n.type, n.description) for n in nodes],
+            )
+            self._conn.executemany(
+                "INSERT INTO edges(from_id, to_id, relationship_type, confidence, map_source, notes) "
+                "VALUES(?,?,?,?,?,?)",
+                [(e.from_id, e.to_id, e.relationship_type, e.confidence, e.map_source, e.notes)
+                 for e in edges],
+            )
+            self._conn.executemany(
+                "INSERT INTO chunks(id, doi, title, authors, year, chunk_index, text) "
+                "VALUES(?,?,?,?,?,?,?)",
+                [(c.id, c.doi, c.title, c.authors, c.year, c.chunk_index, c.text)
+                 for c in chunks],
+            )
+            self._conn.executemany(
+                "INSERT OR IGNORE INTO chunk_nodes(chunk_id, node_id) VALUES(?,?)",
+                [(c.id, nid) for c in chunks for nid in c.taxonomy_node_ids],
+            )
+
+    # ------------------------------------------------------------------
+    # Row → model converters
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _to_node(row: sqlite3.Row) -> Node:
+        return Node(id=row["id"], name=row["name"], type=row["type"], description=row["description"])
+
+    @staticmethod
+    def _to_edge(row: sqlite3.Row) -> Edge:
+        return Edge(
+            from_id=row["from_id"], to_id=row["to_id"],
+            relationship_type=row["relationship_type"],
+            confidence=row["confidence"], map_source=row["map_source"],
+            notes=row["notes"],
+        )
+
+    # ------------------------------------------------------------------
+    # Full-table reads (cached — needed by Retriever at startup)
+    # ------------------------------------------------------------------
+
+    @property
+    def nodes(self) -> list[Node]:
+        if self._nodes_cache is None:
+            rows = self._conn.execute("SELECT * FROM nodes").fetchall()
+            self._nodes_cache = [self._to_node(r) for r in rows]
+            # Warm the nodes_by_id dict cache at the same time
+            self.nodes_by_id._warm({n.id: n for n in self._nodes_cache})
+        return self._nodes_cache
+
+    @property
+    def edges(self) -> list[Edge]:
+        if self._edges_cache is None:
+            self._edges_cache = [
+                self._to_edge(r)
+                for r in self._conn.execute("SELECT * FROM edges").fetchall()
+            ]
+        return self._edges_cache
+
+    @property
+    def chunks(self) -> list[PaperChunk]:
+        if self._chunks_cache is None:
+            rows = self._conn.execute("SELECT * FROM chunks ORDER BY id").fetchall()
+            cn_map: dict[int, list[str]] = {}
+            for r in self._conn.execute("SELECT chunk_id, node_id FROM chunk_nodes").fetchall():
+                cn_map.setdefault(r["chunk_id"], []).append(r["node_id"])
+            self._chunks_cache = [
+                PaperChunk(
+                    id=r["id"], doi=r["doi"], title=r["title"], authors=r["authors"],
+                    year=r["year"], chunk_index=r["chunk_index"], text=r["text"],
+                    taxonomy_node_ids=tuple(cn_map.get(r["id"], [])),
+                )
+                for r in rows
+            ]
+        return self._chunks_cache
 
     # ------------------------------------------------------------------
     # Graph helpers
@@ -79,24 +200,27 @@ class KnowledgeBase:
         visited: set[str] = set()
         while current and current not in visited:
             visited.add(current)
-            parent_edge = next(
-                (e for e in self.incoming.get(current, []) if e.relationship_type in _HIERARCHY_EDGE_TYPES),
-                None,
-            )
-            if parent_edge is None:
+            row = self._conn.execute(
+                "SELECT e.from_id, n.id, n.name, n.type, n.description "
+                "FROM edges e JOIN nodes n ON n.id = e.from_id "
+                "WHERE e.to_id = ? "
+                "  AND e.relationship_type IN ('HAS_SUBPILLAR', 'HAS_RESEARCH_AREA') "
+                "LIMIT 1",
+                (current,),
+            ).fetchone()
+            if row is None:
                 break
-            parent = self.nodes_by_id.get(parent_edge.from_id)
-            if parent:
-                result.append(parent)
-            current = parent_edge.from_id
+            result.append(self._to_node(row))
+            current = row["from_id"]
         return result
 
     def breadcrumb(self, node_id: str) -> str:
-        """Return a human-readable path, e.g. 'Neural Signaling → Electrical Signaling → Action Potential'."""
-        node = self.nodes_by_id.get(node_id)
-        if not node:
+        """Return a human-readable path, e.g. 'Neural Signaling → Action Potential'."""
+        row = self._conn.execute("SELECT name FROM nodes WHERE id = ?", (node_id,)).fetchone()
+        if not row:
             return node_id
-        parts = [a.name.replace("_", " ") for a in reversed(self.ancestors(node_id))] + [node.name.replace("_", " ")]
+        parts = [a.name.replace("_", " ") for a in reversed(self.ancestors(node_id))]
+        parts.append(row["name"].replace("_", " "))
         return " → ".join(parts)
 
     def smart_expand(
@@ -107,106 +231,169 @@ class KnowledgeBase:
         """
         Expand a seed set of node IDs with semantically useful neighbours.
 
-        Traversal rules (one hop, all seven relationship types)
-        -------------------------------------------------------
-        Six edge types are directed; one (RELATED_TO) is bidirectional.
+        Uses two bulk SQL queries (one for incoming edges, one for outgoing)
+        across the entire seed set, then applies the same traversal rules as
+        before.  Unknown relationship types are followed in both directions.
 
-        incoming HAS_SUBPILLAR / HAS_RESEARCH_AREA  → parent Pillar/Subpillar
-        incoming EXPLAINS                            → Theory that explains seed
-        incoming HAS_THEORY                          → parent Pillar of a Theory seed
-        incoming IS_DERIVED_FROM                     → concepts derived from seed
-        incoming RELATED_TO                          → lateral neighbours (bidirectional)
-        outgoing HAS_THEORY                          → Theory owned by seed Pillar
-        outgoing HAS_DIMENSION                       → Dimension nodes of seed
-        outgoing RELATED_TO                          → lateral neighbours (bidirectional)
-        outgoing IS_DERIVED_FROM                     → source concept seed derives from
-
-        Note: Theory nodes sit outside the HAS_SUBPILLAR/HAS_RESEARCH_AREA hierarchy,
-        so their parent Pillar is reached via the reverse of HAS_THEORY.  This is
-        handled by adding an incoming HAS_THEORY traversal when the seed is a Theory.
-
-        Only edges with ``edge.confidence >= confidence_threshold`` are followed.
-        Set ``confidence_threshold=0.0`` to follow all edges unconditionally.
-
-        Parameters
-        ----------
-        node_ids             : Seed node IDs from BM25 / hybrid retrieval.
-        confidence_threshold : Minimum confidence to follow an edge (default 0.8).
-                               Hierarchy edges are always 1.0 and unaffected.
+        Only edges with ``confidence >= confidence_threshold`` are considered;
+        semantic edges (``map_source = 'semantic'``) require an additional +0.1.
         """
         expanded = set(node_ids)
+        if not node_ids:
+            return expanded
 
-        for nid in node_ids:
-            for edge in self.incoming.get(nid, []):
-                threshold = (
-                    min(confidence_threshold + 0.1, 1.0)
-                    if edge.map_source == "semantic"
-                    else confidence_threshold
-                )
-                if edge.confidence < threshold:
-                    continue
-                rt = edge.relationship_type
-                candidate = self.nodes_by_id.get(edge.from_id)
-                if candidate is None:
-                    continue
-                # Walk up the taxonomy hierarchy (Subpillar/Pillar)
-                if rt in _HIERARCHY_EDGE_TYPES and candidate.type in ("Pillar", "Subpillar"):
-                    expanded.add(edge.from_id)
-                # Theory that explains this Research_area
-                elif rt == "EXPLAINS" and candidate.type == "Theory":
-                    expanded.add(edge.from_id)
-                # Parent Pillar of a Theory (Theory nodes are not in the
-                # HAS_SUBPILLAR/HAS_RESEARCH_AREA hierarchy, so ancestors()
-                # won't find their Pillar — use HAS_THEORY incoming instead)
-                elif rt == "HAS_THEORY" and candidate.type == "Pillar":
-                    expanded.add(edge.from_id)
-                # Concepts derived FROM this node (seed=LTP → add STDP)
-                elif rt == "IS_DERIVED_FROM" and candidate.type == "Research_area":
-                    expanded.add(edge.from_id)
-                # RELATED_TO is bidirectional — also traverse incoming direction
-                elif rt in _BIDIRECTIONAL_EDGE_TYPES:
-                    expanded.add(edge.from_id)
-                # Unknown type: follow it (safe default for new relationship types)
-                elif rt not in _KNOWN_RELATIONSHIP_TYPES:
-                    expanded.add(edge.from_id)
+        ph = ",".join("?" * len(node_ids))
+        ids = tuple(node_ids)
 
-            for edge in self.outgoing.get(nid, []):
-                threshold = (
-                    min(confidence_threshold + 0.1, 1.0)
-                    if edge.map_source == "semantic"
-                    else confidence_threshold
-                )
-                if edge.confidence < threshold:
-                    continue
-                rt = edge.relationship_type
-                candidate = self.nodes_by_id.get(edge.to_id)
-                if candidate is None:
-                    continue
-                # Theories owned by this Pillar (Pillar → Theory)
-                if rt == "HAS_THEORY" and candidate.type == "Theory":
-                    expanded.add(edge.to_id)
-                # Measurable dimensions of this node
-                elif rt == "HAS_DIMENSION" and candidate.type == "Dimension":
-                    expanded.add(edge.to_id)
-                # Lateral Research_area neighbours (RELATED_TO is bidirectional)
-                elif rt in _BIDIRECTIONAL_EDGE_TYPES:
-                    expanded.add(edge.to_id)
-                # Source concept this node derives from (seed=STDP → add LTP)
-                elif rt == "IS_DERIVED_FROM" and candidate.type == "Research_area":
-                    expanded.add(edge.to_id)
-                # Unknown type: follow it (safe default for new relationship types)
-                elif rt not in _KNOWN_RELATIONSHIP_TYPES:
-                    expanded.add(edge.to_id)
+        # Incoming edges — candidate is the from_id node
+        rows = self._conn.execute(
+            f"SELECT e.*, n.type AS ctype "
+            f"FROM edges e JOIN nodes n ON n.id = e.from_id "
+            f"WHERE e.to_id IN ({ph}) AND e.confidence >= ?",
+            (*ids, confidence_threshold),
+        ).fetchall()
+        for row in rows:
+            threshold = (
+                min(confidence_threshold + 0.1, 1.0)
+                if row["map_source"] == "semantic"
+                else confidence_threshold
+            )
+            if row["confidence"] < threshold:
+                continue
+            rt, ctype, from_id = row["relationship_type"], row["ctype"], row["from_id"]
+            if rt in _HIERARCHY_EDGE_TYPES and ctype in ("Pillar", "Subpillar"):
+                expanded.add(from_id)
+            elif rt == "EXPLAINS" and ctype == "Theory":
+                expanded.add(from_id)
+            elif rt == "HAS_THEORY" and ctype == "Pillar":
+                expanded.add(from_id)
+            elif rt == "IS_DERIVED_FROM" and ctype == "Research_area":
+                expanded.add(from_id)
+            elif rt in _BIDIRECTIONAL_EDGE_TYPES:
+                expanded.add(from_id)
+            elif rt not in _KNOWN_RELATIONSHIP_TYPES:
+                expanded.add(from_id)
+
+        # Outgoing edges — candidate is the to_id node
+        rows = self._conn.execute(
+            f"SELECT e.*, n.type AS ctype "
+            f"FROM edges e JOIN nodes n ON n.id = e.to_id "
+            f"WHERE e.from_id IN ({ph}) AND e.confidence >= ?",
+            (*ids, confidence_threshold),
+        ).fetchall()
+        for row in rows:
+            threshold = (
+                min(confidence_threshold + 0.1, 1.0)
+                if row["map_source"] == "semantic"
+                else confidence_threshold
+            )
+            if row["confidence"] < threshold:
+                continue
+            rt, ctype, to_id = row["relationship_type"], row["ctype"], row["to_id"]
+            if rt == "HAS_THEORY" and ctype == "Theory":
+                expanded.add(to_id)
+            elif rt == "HAS_DIMENSION" and ctype == "Dimension":
+                expanded.add(to_id)
+            elif rt in _BIDIRECTIONAL_EDGE_TYPES:
+                expanded.add(to_id)
+            elif rt == "IS_DERIVED_FROM" and ctype == "Research_area":
+                expanded.add(to_id)
+            elif rt not in _KNOWN_RELATIONSHIP_TYPES:
+                expanded.add(to_id)
 
         return expanded
 
     def chunks_for_nodes(self, node_ids: set[str]) -> list[PaperChunk]:
         """Return deduplicated chunks linked to any of the given node IDs."""
-        seen: set[int] = set()
-        result: list[PaperChunk] = []
-        for nid in node_ids:
-            for chunk in self.node_to_chunks.get(nid, []):
-                if chunk.id not in seen:
-                    seen.add(chunk.id)
-                    result.append(chunk)
+        if not node_ids:
+            return []
+        ph = ",".join("?" * len(node_ids))
+        rows = self._conn.execute(
+            f"SELECT DISTINCT c.* FROM chunks c "
+            f"JOIN chunk_nodes cn ON cn.chunk_id = c.id "
+            f"WHERE cn.node_id IN ({ph})",
+            tuple(node_ids),
+        ).fetchall()
+        if not rows:
+            return []
+        chunk_ids = tuple(r["id"] for r in rows)
+        cn_ph = ",".join("?" * len(chunk_ids))
+        cn_map: dict[int, list[str]] = {}
+        for r in self._conn.execute(
+            f"SELECT chunk_id, node_id FROM chunk_nodes WHERE chunk_id IN ({cn_ph})",
+            chunk_ids,
+        ).fetchall():
+            cn_map.setdefault(r["chunk_id"], []).append(r["node_id"])
+        return [
+            PaperChunk(
+                id=r["id"], doi=r["doi"], title=r["title"], authors=r["authors"],
+                year=r["year"], chunk_index=r["chunk_index"], text=r["text"],
+                taxonomy_node_ids=tuple(cn_map.get(r["id"], [])),
+            )
+            for r in rows
+        ]
+
+
+# ---------------------------------------------------------------------------
+# Dict-like proxies (preserve call-site compatibility)
+# ---------------------------------------------------------------------------
+
+class _NodeIndex:
+    """
+    Dict-like proxy for node lookups.
+
+    Backed by a dict cache that is populated the first time ``kb.nodes`` is
+    accessed (which happens at Retriever startup).  Subsequent lookups are O(1).
+    Falls back to a SQL query for any node ID requested before the cache is warm.
+    """
+
+    def __init__(self, kb: KnowledgeBase):
+        self._kb = kb
+        self._cache: dict[str, Node] = {}
+
+    def _warm(self, cache: dict[str, Node]) -> None:
+        self._cache = cache
+
+    def __getitem__(self, key: str) -> Node:
+        if key in self._cache:
+            return self._cache[key]
+        row = self._kb._conn.execute("SELECT * FROM nodes WHERE id = ?", (key,)).fetchone()
+        if row is None:
+            raise KeyError(key)
+        node = KnowledgeBase._to_node(row)
+        self._cache[key] = node
+        return node
+
+    def __contains__(self, key: str) -> bool:
+        if key in self._cache:
+            return True
+        return self._kb._conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (key,)
+        ).fetchone() is not None
+
+    def get(self, key: str, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+
+class _EdgeIndex:
+    """Dict-like proxy for adjacency lookups (outgoing or incoming)."""
+
+    def __init__(self, conn: sqlite3.Connection, convert, col: str):
+        self._conn = conn
+        self._convert = convert
+        self._col = col
+
+    def __getitem__(self, key: str) -> list[Edge]:
+        result = self.get(key)
+        if result is None:
+            raise KeyError(key)
         return result
+
+    def get(self, key: str, default=None):
+        rows = self._conn.execute(
+            f"SELECT * FROM edges WHERE {self._col} = ?", (key,)
+        ).fetchall()
+        return [self._convert(r) for r in rows] if rows else default
