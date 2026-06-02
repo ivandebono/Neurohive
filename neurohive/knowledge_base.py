@@ -16,6 +16,14 @@ _BIDIRECTIONAL_EDGE_TYPES = frozenset({"RELATED_TO"})
 # walks (breadcrumbs). Subset of the six directed edge types.
 _HIERARCHY_EDGE_TYPES = frozenset({"HAS_SUBPILLAR", "HAS_RESEARCH_AREA"})
 
+# All relationship types with explicit traversal logic in smart_expand.
+# Any type absent from this set is treated as bidirectional (safe default).
+_KNOWN_RELATIONSHIP_TYPES = (
+    _HIERARCHY_EDGE_TYPES
+    | _BIDIRECTIONAL_EDGE_TYPES
+    | frozenset({"HAS_DIMENSION", "HAS_THEORY", "EXPLAINS", "IS_DERIVED_FROM"})
+)
+
 
 class KnowledgeBase:
     """
@@ -158,6 +166,9 @@ class KnowledgeBase:
                 # RELATED_TO is bidirectional — also traverse incoming direction
                 elif rt in _BIDIRECTIONAL_EDGE_TYPES:
                     expanded.add(edge.from_id)
+                # Unknown type: follow it (safe default for new relationship types)
+                elif rt not in _KNOWN_RELATIONSHIP_TYPES:
+                    expanded.add(edge.from_id)
 
             for edge in self.outgoing.get(nid, []):
                 threshold = (
@@ -182,6 +193,9 @@ class KnowledgeBase:
                     expanded.add(edge.to_id)
                 # Source concept this node derives from (seed=STDP → add LTP)
                 elif rt == "IS_DERIVED_FROM" and candidate.type == "Research_area":
+                    expanded.add(edge.to_id)
+                # Unknown type: follow it (safe default for new relationship types)
+                elif rt not in _KNOWN_RELATIONSHIP_TYPES:
                     expanded.add(edge.to_id)
 
         return expanded

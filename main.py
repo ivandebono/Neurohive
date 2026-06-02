@@ -29,8 +29,9 @@ Usage
 
 config.toml
 -----------
-    Provides defaults for all pipeline parameters (model, top-k values, etc.).
-    Use --model to override the model at the command line.
+    Provides defaults for all pipeline parameters.  Every config.toml value
+    can be overridden at query time via CLI flags (listed below).  Priority
+    order (highest first): CLI flag → env var → config.toml → hard-coded default.
 """
 
 from __future__ import annotations
@@ -136,7 +137,47 @@ def main() -> None:
         default=None,
         help=(
             "Anthropic model ID to use (also reads ANTHROPIC_MODEL env var). "
-            "Default is set in config.toml [anthropic] model."
+            "Default: config.toml [anthropic] model."
+        ),
+    )
+    parser.add_argument(
+        "--node-top-k", type=int, default=None, metavar="N",
+        help="Number of taxonomy nodes retrieved per query. Default: config.toml [pipeline] node_top_k.",
+    )
+    parser.add_argument(
+        "--chunk-top-k", type=int, default=None, metavar="N",
+        help="Number of paper chunks retrieved per query. Default: config.toml [pipeline] chunk_top_k.",
+    )
+    parser.add_argument(
+        "--confidence-threshold", type=float, default=None, metavar="F",
+        help=(
+            "Minimum edge confidence for graph expansion (0.0–1.0). "
+            "Default: config.toml [pipeline] confidence_threshold."
+        ),
+    )
+    parser.add_argument(
+        "--embeddings-model", default=None, metavar="MODEL",
+        help=(
+            "HuggingFace model ID for dense retrieval "
+            "(e.g. sentence-transformers/all-MiniLM-L6-v2). "
+            "The model must already be downloaded under models/. "
+            "Default: config.toml [embeddings] model."
+        ),
+    )
+    parser.add_argument(
+        "--nli-model", default=None, metavar="MODEL",
+        help=(
+            "HuggingFace model ID for NLI entailment checking "
+            "(e.g. cross-encoder/nli-deberta-v3-small). "
+            "Used only with --verify; model must be downloaded under models/. "
+            "Default: config.toml [nli] model."
+        ),
+    )
+    parser.add_argument(
+        "--entailment-threshold", type=float, default=None, metavar="F",
+        help=(
+            "Minimum post-softmax entailment probability for a claim to pass NLI verification. "
+            "Used only with --verify. Default: config.toml [nli] entailment_threshold."
         ),
     )
     parser.add_argument(
@@ -147,8 +188,7 @@ def main() -> None:
         "--verify", action="store_true",
         help=(
             "Enable post-generation NLI entailment verification. "
-            "Requires: make setup-nli && make download-nli-model. "
-            "Model and threshold are set in config.toml [nli] section."
+            "Requires: make setup-nli && make download-nli-model."
         ),
     )
     parser.add_argument(
@@ -163,14 +203,26 @@ def main() -> None:
     model = args.model or os.environ.get("ANTHROPIC_MODEL") or cfg["anthropic"]["model"]
     backend = AnthropicBackend(model=model)
 
+    node_top_k          = args.node_top_k          if args.node_top_k          is not None else cfg["pipeline"]["node_top_k"]
+    chunk_top_k         = args.chunk_top_k         if args.chunk_top_k         is not None else cfg["pipeline"]["chunk_top_k"]
+    confidence_threshold = args.confidence_threshold if args.confidence_threshold is not None else cfg["pipeline"]["confidence_threshold"]
+
+    # Derive local model directory from a HuggingFace model ID (last path component).
+    models_root = Path(__file__).parent / "models"
+    embeddings_model_dir = (models_root / args.embeddings_model.split("/")[-1]) if args.embeddings_model else None
+    nli_model_dir        = (models_root / args.nli_model.split("/")[-1])        if args.nli_model        else None
+
     from neurohive.pipeline import QueryPipeline  # noqa: PLC0415
     pipeline = QueryPipeline(
         data_dir=DATA_DIR,
         backend=backend,
-        node_top_k=cfg["pipeline"]["node_top_k"],
-        chunk_top_k=cfg["pipeline"]["chunk_top_k"],
-        confidence_threshold=cfg["pipeline"]["confidence_threshold"],
+        node_top_k=node_top_k,
+        chunk_top_k=chunk_top_k,
+        confidence_threshold=confidence_threshold,
         verify_entailment=args.verify,
+        nli_model_dir=nli_model_dir,
+        entailment_threshold=args.entailment_threshold,
+        model_dir=embeddings_model_dir,
     )
 
     if args.query:

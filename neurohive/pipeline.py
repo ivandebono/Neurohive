@@ -24,6 +24,10 @@ from neurohive.knowledge_base import KnowledgeBase
 from neurohive.models import Node, PaperChunk
 from neurohive.retrieval import Retriever
 
+_MAP_SOURCE_LABELS: dict[str, str] = {
+    "semantic": "inferred",
+}
+
 _EDGE_LABELS: dict[str, str] = {
     "HAS_SUBPILLAR":     "includes subpillar",
     "HAS_RESEARCH_AREA": "encompasses research area",
@@ -127,6 +131,7 @@ class QueryPipeline:
         confidence_threshold: float = 0.8,
         verify_entailment: bool = False,
         nli_model_dir: Path | str | None = None,
+        entailment_threshold: float | None = None,
         model_dir: Path | str | None = None,
     ):
         self.node_top_k = node_top_k
@@ -141,7 +146,7 @@ class QueryPipeline:
         self._nli_model = None
         self._nli_threshold: float = 0.5
         if verify_entailment:
-            self._load_nli_model(nli_model_dir)
+            self._load_nli_model(nli_model_dir, entailment_threshold)
 
     @property
     def retrieval_mode(self) -> str:
@@ -151,7 +156,7 @@ class QueryPipeline:
     # NLI model loading
     # ------------------------------------------------------------------
 
-    def _load_nli_model(self, nli_model_dir: Path | str | None) -> None:
+    def _load_nli_model(self, nli_model_dir: Path | str | None, entailment_threshold: float | None = None) -> None:
         """
         Load the cross-encoder NLI model for post-generation entailment checking.
 
@@ -174,7 +179,8 @@ class QueryPipeline:
         cfg = load_config()
         nli_cfg = cfg.get("nli", {})
         hf_model_id: str = nli_cfg.get("model", "cross-encoder/nli-deberta-v3-small")
-        self._nli_threshold = float(nli_cfg.get("entailment_threshold", 0.5))
+        cfg_threshold = float(nli_cfg.get("entailment_threshold", 0.5))
+        self._nli_threshold = entailment_threshold if entailment_threshold is not None else cfg_threshold
 
         try:
             from sentence_transformers import CrossEncoder  # noqa: PLC0415
@@ -235,7 +241,8 @@ class QueryPipeline:
                     target = self.kb.nodes_by_id[edge.to_id]
                     label = _EDGE_LABELS.get(edge.relationship_type, edge.relationship_type)
                     conf = f" [confidence: {edge.confidence:.0%}]" if edge.confidence < 1.0 else ""
-                    inferred = " [inferred]" if edge.map_source == "semantic" else ""
+                    source_label = _MAP_SOURCE_LABELS.get(edge.map_source, edge.map_source)
+                    inferred = f" [{source_label}]" if edge.map_source != "canonical" else ""
                     lines.append(f"  {label} → {target.name.replace('_', ' ')}{conf}{inferred}")
                     if edge.notes.strip():
                         lines.append(f"    ({edge.notes})")
@@ -243,6 +250,8 @@ class QueryPipeline:
                     hidden += 1
             if hidden:
                 lines.append(f"  [+ {hidden} further connection{'s' if hidden > 1 else ''} not retrieved for this query]")
+            if not (self.kb.outgoing.get(node.id) or self.kb.incoming.get(node.id)):
+                lines.append("  [no connections]")
             lines.append("")
         return "\n".join(lines)
 

@@ -2,24 +2,14 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 
-NodeType = Literal["Pillar", "Subpillar", "Research_area", "Dimension", "Theory"]
-
-RelationshipType = Literal[
-    "HAS_SUBPILLAR",
-    "HAS_RESEARCH_AREA",
-    "HAS_DIMENSION",
-    "HAS_THEORY",
-    "EXPLAINS",
-    "RELATED_TO",
-    "IS_DERIVED_FROM",
-]
-
-MapSource = Literal["canonical", "semantic"]
+NodeType = str
+RelationshipType = str
+MapSource = str
 
 
 @dataclass(frozen=True)
@@ -46,6 +36,10 @@ class Node:
         with open(path, newline="") as f:
             return [cls.from_row(row) for row in csv.DictReader(f)]
 
+    def isolated(self, edges: Iterable[Edge]) -> bool:
+        """Return True if this node has at least one edge, False if it has none."""
+        return any(e.from_id == self.id or e.to_id == self.id for e in edges)
+
 
 @dataclass(frozen=True)
 class Edge:
@@ -63,9 +57,9 @@ class Edge:
         return cls(
             from_id=row["from_id"],
             to_id=row["to_id"],
-            relationship_type=row["relationship_type"],  # type: ignore[arg-type]
+            relationship_type=row["relationship_type"],
             confidence=float(row["confidence"]),
-            map_source=row["map_source"],  # type: ignore[arg-type]
+            map_source=row["map_source"],
             notes=row["notes"],
         )
 
