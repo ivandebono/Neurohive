@@ -41,7 +41,8 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 - **No external retrieval library**: BM25 from scratch in ~50 lines of standard-library Python. Keeps the install simple and the algorithm transparent.
 - **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings && make download-model`. The default works without it.
 - **Anthropic API backend**: uses `tool_choice` to structurally guarantee the output matches the triple schema — the API enforces the format, not just the prompt.
-- **Configuration in one place**: `config.toml` is the single source for all model names and tunable parameters. No model name is hardcoded in application code.
+- **Configuration in one place**: `config.toml` is the single source for all model names and tunable parameters. Every value can also be overridden per-query via a CLI flag — no file edit needed for one-off experiments.
+- **SQLite-backed knowledge store**: raw source files live in `data/raw/`; the pipeline auto-builds `data/database/neurohive.db` on first run using the stdlib `sqlite3` module. No additional database dependency required.
 
 
 ---
@@ -112,7 +113,7 @@ as a paper or taxonomy triple. Do not use any knowledge outside these two sectio
 
 1. **Retrieval** — BM25 (or BM25 + dense via RRF) scores every node by how closely its name, type, and description match the query. The top-k nodes form the seed set.
 2. **Graph expansion** — `smart_expand()` traverses one hop from the seed set, adding: parent Pillars and Subpillars (via `HAS_SUBPILLAR` / `HAS_RESEARCH_AREA`), Theory nodes that explain the seed concept (incoming `EXPLAINS`), Dimension nodes that characterise it (outgoing `HAS_DIMENSION`), and lateral neighbours in both directions (bidirectional `RELATED_TO`). Edges are followed only if `confidence ≥ threshold`; algorithmically-inferred edges (`map_source="semantic"`) are held to a stricter bar (`threshold + 0.1`).
-3. **Formatting** — the expanded set is sorted by type depth (Pillar → Subpillar → Research_area → Theory → Dimension) and each node is rendered with its full breadcrumb ancestry path, its description, and every outgoing edge to another in-context node. Edge types are mapped to natural-language phrases (`EXPLAINS →` becomes `explains →`; `HAS_DIMENSION →` becomes `is characterised by →`). Edges with `confidence < 1.0` show their score. Algorithmically-derived edges are tagged `[inferred]` so the model can hedge on them.
+3. **Formatting** — the expanded set is sorted by type depth (Pillar → Subpillar → Research_area → Theory → Dimension) and each node is rendered with its full breadcrumb ancestry path, its description, and every outgoing edge to another in-context node. Edge types are mapped to natural-language phrases (`EXPLAINS →` becomes `explains →`; `HAS_DIMENSION →` becomes `is characterised by →`). Edges with `confidence < 1.0` show their score. Algorithmically-derived edges (`map_source="semantic"`) are tagged `[inferred]`; other non-canonical sources show their source name. Nodes with no edges in either direction are tagged `[no connections]` so the model knows the absence of relationships is a property of the concept, not a retrieval gap.
 
 `PAPER EVIDENCE` is built from two sources, then deduplicated:
 
@@ -138,7 +139,7 @@ Each element is either a **paper triple** (grounded in PAPER EVIDENCE) or a **ta
 
 ## Knowledge Store
 
-The pipeline is built over two data sources in `data/`:
+The pipeline is built over two data sources in `data/raw/`:
 
 **Taxonomy graph** — 92 neuroscience concept nodes across five types (Pillar, Subpillar, Research_area, Theory, Dimension), connected by 130 typed edges. Each edge carries a `confidence` score (0–1) and a `map_source` field (`canonical` or `semantic`).
 
@@ -223,15 +224,28 @@ uv run python main.py --model claude-sonnet-4-6 "Explain inhibitory interneuron 
 
 ### Tune retrieval parameters
 
-Retrieval parameters (`node_top_k`, `chunk_top_k`, `confidence_threshold`) are set in `config.toml` and apply to every query. Edit them there to change the defaults.
+Every `config.toml` parameter can be overridden at the command line for a single query without editing the file:
+
+```bash
+uv run python main.py --node-top-k 10 --chunk-top-k 8 --confidence-threshold 0.75 "query..."
+uv run python main.py --model claude-sonnet-4-6 --entailment-threshold 0.6 --verify "query..."
+```
+
+To change the permanent defaults, edit `config.toml`.
 
 ### All CLI flags
 
 | Flag | Default | Description |
 |---|---|---|
-| `--model` | from config.toml | Anthropic model ID (also reads `ANTHROPIC_MODEL` env var) |
+| `--model MODEL` | config.toml `[anthropic] model` | Anthropic model ID (also reads `ANTHROPIC_MODEL` env var) |
+| `--node-top-k N` | config.toml `[pipeline] node_top_k` | Taxonomy nodes retrieved per query |
+| `--chunk-top-k N` | config.toml `[pipeline] chunk_top_k` | Paper chunks retrieved per query |
+| `--confidence-threshold F` | config.toml `[pipeline] confidence_threshold` | Minimum edge confidence for graph expansion (0.0–1.0) |
+| `--embeddings-model MODEL` | config.toml `[embeddings] model` | HuggingFace model ID for dense retrieval |
+| `--nli-model MODEL` | config.toml `[nli] model` | HuggingFace model ID for NLI entailment checking (used with `--verify`) |
+| `--entailment-threshold F` | config.toml `[nli] entailment_threshold` | Minimum entailment probability for NLI verification (used with `--verify`) |
 | `--show-sources` | off | Print retrieved nodes and chunks after the answer |
-| `--verify` | off | Enable NLI entailment verification (requires `make setup-nli` or `make setup-embeddings-nli`) |
+| `--verify` | off | Enable NLI entailment verification (requires `make setup-nli`) |
 | `--debug` | off | Print raw model triples before verification |
 
 ### Python API
@@ -269,9 +283,13 @@ model = "claude-haiku-4-5-20251001"
 
 [embeddings]
 model = "sentence-transformers/all-MiniLM-L6-v2"
+
+[nli]
+model                = "cross-encoder/nli-deberta-v3-small"
+entailment_threshold = 0.5
 ```
 
-Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml > built-in default`.
+Every parameter has a matching CLI flag (see the flags table above). Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml > built-in default`.
 
 ---
 
@@ -283,13 +301,17 @@ neurohive/
 │   └── taxonomy_graph.png         Taxonomy graph visualisation
 │
 ├── data/
-│   ├── taxonomy_nodes.csv         92 neuroscience concept nodes
-│   ├── taxonomy_edges.csv         130 typed relationships between nodes
-│   └── paper_chunks.json          83 excerpts from 24 peer-reviewed papers
+│   ├── raw/
+│   │   ├── taxonomy_nodes.csv     92 neuroscience concept nodes
+│   │   ├── taxonomy_edges.csv     130 typed relationships between nodes
+│   │   ├── paper_chunks.json      83 excerpts from 24 peer-reviewed papers
+│   │   └── README.md              Data schema reference
+│   └── database/
+│       └── neurohive.db           SQLite database (auto-generated from raw/, gitignored)
 │
 ├── neurohive/
 │   ├── models.py                  Node, Edge, PaperChunk dataclasses
-│   ├── knowledge_base.py          KnowledgeBase: graph indices, smart_expand()
+│   ├── knowledge_base.py          SQLite-backed store; graph expansion and lookups
 │   ├── retrieval.py               BM25 Okapi + optional hybrid RRF retriever
 │   ├── backends.py                AnthropicBackend (tool_choice JSON guarantee)
 │   ├── pipeline.py                QueryPipeline: end-to-end orchestration + _verify()
