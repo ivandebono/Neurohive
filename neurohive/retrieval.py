@@ -44,8 +44,11 @@ from neurohive.models import Node, PaperChunk
 _K1 = 1.5
 _B = 0.75
 
-# RRF constant
-_RRF_K = 60
+# RRF constants — lower k sharpens rank differences at the top of the list.
+# Taxonomy nodes use a lower k because the corpus is small and structured,
+# so BM25 rank differences are meaningful; paper chunks use the standard k=60.
+_NODE_RRF_K  = 30
+_CHUNK_RRF_K = 60
 
 # Sibling-boost: chunks sharing a DOI with a top-k seed receive at least this
 # fraction of that seed's best score, surfacing context from the same paper.
@@ -221,7 +224,7 @@ class Retriever:
         dense_rank = {idx: r for r, idx in enumerate(dense_order)}
 
         rrf = [
-            1 / (_RRF_K + bm25_rank[i]) + 1 / (_RRF_K + dense_rank[i])
+            1 / (_NODE_RRF_K + bm25_rank[i]) + 1 / (_NODE_RRF_K + dense_rank[i])
             for i in range(n)
         ]
         ranked = sorted(enumerate(rrf), key=lambda x: x[1], reverse=True)
@@ -305,7 +308,7 @@ class Retriever:
         bm25_rank = {idx: r for r, idx in enumerate(bm25_order)}
         dense_rank = {idx: r for r, idx in enumerate(dense_order)}
         rrf_scores = [
-            1 / (_RRF_K + bm25_rank[i]) + 1 / (_RRF_K + dense_rank[i])
+            1 / (_CHUNK_RRF_K + bm25_rank[i]) + 1 / (_CHUNK_RRF_K + dense_rank[i])
             for i in range(n)
         ]
         return self._sibling_boost(rrf_scores, top_k)
