@@ -30,3 +30,6 @@ models/
 
 # Generated SQLite database (rebuilt automatically from data/)
 *.db
+
+# Query logs
+logs/

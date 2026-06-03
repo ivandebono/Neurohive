@@ -37,6 +37,8 @@ config.toml
 from __future__ import annotations
 
 import argparse
+import datetime
+import json
 import os
 import sys
 import warnings
@@ -44,6 +46,8 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).parent / "data"
 ENV_PATH = Path(__file__).parent / ".env"
+LOGS_DIR = Path(__file__).parent / "logs"
+_DB_PATH = DATA_DIR / "database" / "neurohive.db"
 
 
 def _load_env() -> None:
@@ -84,7 +88,37 @@ def _print_result(result, show_sources: bool = False) -> None:
         print()
 
 
-def _run_and_print(pipeline, query: str, show_sources: bool, debug: bool = False) -> None:
+def _build_log_entry(query: str, result, config: dict, verification_warnings: list[str]) -> dict:
+    return {
+        "timestamp":         datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "query":             query,
+        "config":            config,
+        "answer":            result.answer,
+        "citations":         result.citation,
+        "taxonomy_concepts": result.document,
+        "answer_triples":    result.answer_triples,
+        "nodes_retrieved":   [{"id": n.id, "name": n.name, "type": n.type} for n in result.nodes_used],
+        "chunks_retrieved":  len(result.chunks_used),
+        "retrieval_mode":    result.retrieval_mode,
+        "model":             result.model,
+        "warnings":          verification_warnings,
+    }
+
+
+def _write_log(log_path: Path, entry: dict) -> None:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def _run_and_print(
+    pipeline,
+    query: str,
+    show_sources: bool,
+    debug: bool = False,
+    log_path: Path | None = None,
+    log_config: dict | None = None,
+) -> None:
     """Run the pipeline, print the result, then print any verification warnings."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -92,17 +126,30 @@ def _run_and_print(pipeline, query: str, show_sources: bool, debug: bool = False
 
     _print_result(result, show_sources)
 
+    warning_messages: list[str] = []
     if caught:
         print("Verification warnings:")
         for w in caught:
             print(f"  ⚠  {w.message}")
+            warning_messages.append(str(w.message))
         print()
 
+    if log_path is not None:
+        _write_log(log_path, _build_log_entry(query, result, log_config or {}, warning_messages))
 
-def _interactive(pipeline, show_sources: bool, debug: bool = False) -> None:
+
+def _interactive(
+    pipeline,
+    show_sources: bool,
+    debug: bool = False,
+    log_path: Path | None = None,
+    log_config: dict | None = None,
+) -> None:
     mode = pipeline.retrieval_mode
     model = pipeline._backend.model_id
     print(f"Neurohive Query Pipeline  [{mode} · {model}]")
+    if log_path:
+        print(f"Logging to {log_path}")
     print("Type your query and press Enter.  'quit' or Ctrl-C to exit.\n")
     while True:
         try:
@@ -114,7 +161,8 @@ def _interactive(pipeline, show_sources: bool, debug: bool = False) -> None:
             continue
         if query.lower() in ("quit", "exit", "q"):
             break
-        _run_and_print(pipeline, query, show_sources, debug=debug)
+        _run_and_print(pipeline, query, show_sources, debug=debug,
+                       log_path=log_path, log_config=log_config)
 
 
 def main() -> None:
@@ -195,7 +243,31 @@ def main() -> None:
         "--debug", action="store_true",
         help="Print the raw model output (triples before verification) for each query.",
     )
+    parser.add_argument(
+        "--log", action="store_true",
+        help=(
+            "Append a structured JSONL log entry for each query to "
+            "logs/YYYY-MM-DD.jsonl (created automatically)."
+        ),
+    )
+    parser.add_argument(
+        "--ingest", action="store_true",
+        help=(
+            "Build (or rebuild) the knowledge-base database from raw source files "
+            "and exit.  Run this after adding or editing files in data/raw/."
+        ),
+    )
     args = parser.parse_args()
+
+    from neurohive.knowledge_base import KnowledgeBase  # noqa: PLC0415
+
+    if args.ingest:
+        KnowledgeBase(DATA_DIR, verbose=True, rebuild=True)
+        return
+
+    # Auto-build on first run (database absent) before loading the full pipeline.
+    if not _DB_PATH.exists():
+        KnowledgeBase(DATA_DIR, verbose=True)
 
     from neurohive.backends import AnthropicBackend  # noqa: PLC0415
 
@@ -225,10 +297,22 @@ def main() -> None:
         model_dir=embeddings_model_dir,
     )
 
+    log_path = (LOGS_DIR / f"{datetime.date.today().isoformat()}.jsonl") if args.log else None
+    log_config = {
+        "model":                model,
+        "node_top_k":           node_top_k,
+        "chunk_top_k":          chunk_top_k,
+        "confidence_threshold": confidence_threshold,
+        "verify_entailment":    args.verify,
+        "entailment_threshold": args.entailment_threshold,
+    } if args.log else None
+
     if args.query:
-        _run_and_print(pipeline, args.query, args.show_sources, debug=args.debug)
+        _run_and_print(pipeline, args.query, args.show_sources, debug=args.debug,
+                       log_path=log_path, log_config=log_config)
     else:
-        _interactive(pipeline, args.show_sources, debug=args.debug)
+        _interactive(pipeline, args.show_sources, debug=args.debug,
+                     log_path=log_path, log_config=log_config)
 
 
 if __name__ == "__main__":

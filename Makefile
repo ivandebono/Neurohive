@@ -16,7 +16,7 @@ help:
 	@echo "    download-nli-model  Install NLI deps + download cross-encoder model from config.toml"
 	@echo ""
 	@echo "  Other"
-	@echo "    clean               Remove .venv and downloaded models/"
+	@echo "    clean               Remove .venv, downloaded models/, and generated database"
 	@echo "    help                Show this message"
 	@echo ""
 	@echo "  Quick start"
@@ -63,7 +63,8 @@ graph:
 	  *)      echo "Open assets/taxonomy_graph.png manually" ;; \
 	esac
 
-## Remove .venv and downloaded models/
+## Remove .venv, downloaded models/, and generated database
 clean:
 	rm -rf .venv
 	rm -rf models/
+	rm -rf data/database/

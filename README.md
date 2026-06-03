@@ -159,6 +159,7 @@ The pipeline is built over two data sources in `data/raw/`:
 git clone <repo-url>
 cd neurohive
 make setup
+uv run python main.py --ingest   # build the database once from data/raw/
 ```
 
 ### API key
@@ -196,6 +197,14 @@ make setup-embeddings-nli   # installs and downloads both models in one step
 ---
 
 ## How to Run
+
+### First-run database setup
+
+On the very first run the knowledge-base database is built automatically from the raw files in `data/raw/` with a progress printout.  You can also trigger this explicitly (and rebuild after adding new data):
+
+```bash
+uv run python main.py --ingest
+```
 
 ### Single query
 
@@ -247,6 +256,8 @@ To change the permanent defaults, edit `config.toml`.
 | `--show-sources` | off | Print retrieved nodes and chunks after the answer |
 | `--verify` | off | Enable NLI entailment verification (requires `make setup-nli`) |
 | `--debug` | off | Print raw model triples before verification |
+| `--log` | off | Append a JSONL record for each query to `logs/YYYY-MM-DD.jsonl` |
+| `--ingest` | — | Build (or rebuild) the database from `data/raw/`, then exit |
 
 ### Python API
 
@@ -320,6 +331,16 @@ neurohive/
 ├── scripts/
 │   ├── download_model.py          Downloads the embedding model for hybrid retrieval
 │   └── download_nli_model.py      Downloads the NLI cross-encoder model
+│
+├── tests/
+│   ├── conftest.py                Shared fixtures and MockBackend
+│   ├── test_models.py
+│   ├── test_config.py
+│   ├── test_knowledge_base.py
+│   ├── test_retrieval.py
+│   └── test_pipeline.py
+│
+├── logs/                          Per-day JSONL query logs (gitignored; created by --log)
 │
 ├── main.py                        CLI entry point
 ├── config.toml                    All tunable parameters (single source of truth)

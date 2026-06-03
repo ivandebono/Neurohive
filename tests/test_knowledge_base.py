@@ -11,6 +11,61 @@ from neurohive.models import Node
 
 
 # ---------------------------------------------------------------------------
+# Verbose ingestion and rebuild
+# ---------------------------------------------------------------------------
+
+class TestIngestFlags:
+    def test_first_run_populates_database(self, data_dir):
+        db_path = data_dir / "database" / "neurohive.db"
+        assert not db_path.exists()
+        KnowledgeBase(data_dir)
+        assert db_path.exists()
+
+    def test_verbose_prints_progress(self, data_dir, capsys):
+        KnowledgeBase(data_dir, verbose=True)
+        out = capsys.readouterr().out
+        assert "Building knowledge base" in out
+        assert "taxonomy_nodes.csv" in out
+        assert "taxonomy_edges.csv" in out
+        assert "paper_chunks.json" in out
+        assert "done" in out
+
+    def test_silent_by_default(self, data_dir, capsys):
+        KnowledgeBase(data_dir)
+        assert capsys.readouterr().out == ""
+
+    def test_rebuild_recreates_database(self, data_dir):
+        kb1 = KnowledgeBase(data_dir)
+        db_path = data_dir / "database" / "neurohive.db"
+        mtime_before = db_path.stat().st_mtime
+
+        import time; time.sleep(0.05)
+        KnowledgeBase(data_dir, rebuild=True)
+        mtime_after = db_path.stat().st_mtime
+
+        assert mtime_after > mtime_before  # file was replaced
+
+    def test_rebuild_preserves_data(self, data_dir):
+        KnowledgeBase(data_dir)
+        kb = KnowledgeBase(data_dir, rebuild=True)
+        assert len(kb.nodes) == 5
+        assert len(kb.edges) == 4
+
+    def test_no_rebuild_skips_ingestion(self, data_dir, capsys):
+        KnowledgeBase(data_dir, verbose=True)   # first run: ingests
+        capsys.readouterr()
+        KnowledgeBase(data_dir, verbose=True)   # second run: DB already populated
+        out = capsys.readouterr().out
+        assert out == ""  # nothing printed — ingestion was skipped
+
+    def test_rebuild_verbose_prints_progress(self, data_dir, capsys):
+        KnowledgeBase(data_dir)                          # silent first build
+        KnowledgeBase(data_dir, rebuild=True, verbose=True)
+        out = capsys.readouterr().out
+        assert "Building knowledge base" in out
+
+
+# ---------------------------------------------------------------------------
 # _dedup
 # ---------------------------------------------------------------------------
 

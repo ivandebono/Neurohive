@@ -78,20 +78,25 @@ class KnowledgeBase:
     data_dir : Project data directory.  Raw source files are read from
                ``data_dir/raw/``; the SQLite database is written to
                ``data_dir/database/neurohive.db``.
+    verbose  : Print step-by-step progress during ingestion.
+    rebuild  : Delete and recreate the database even if it already exists.
     """
 
-    def __init__(self, data_dir: Path | str):
+    def __init__(self, data_dir: Path | str, *, verbose: bool = False, rebuild: bool = False):
         data_dir = Path(data_dir)
         self._raw_dir = data_dir / "raw"
         db_path = data_dir / "database" / "neurohive.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if rebuild and db_path.exists():
+            db_path.unlink()
 
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
 
         if self._conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0] == 0:
-            self._ingest()
+            self._ingest(verbose=verbose)
 
         # Session caches for full-table reads (populated on first access)
         self._nodes_cache: list[Node] | None = None
@@ -129,15 +134,34 @@ class KnowledgeBase:
                 result.append(item)
         return result
 
-    def _ingest(self) -> None:
-        """Populate the database from the raw source files."""
-        nodes  = Node.load_all(self._raw_dir / "taxonomy_nodes.csv")
-        edges  = Edge.load_all(self._raw_dir / "taxonomy_edges.csv")
-        chunks = PaperChunk.load_all(self._raw_dir / "paper_chunks.json")
+    @staticmethod
+    def _step(label: str, count: int | None = None) -> None:
+        """Print a single completed ingestion step."""
+        suffix = f"  {count}" if count is not None else ""
+        print(f"  \033[32m✓\033[0m  {label}{suffix}", flush=True)
 
-        nodes  = self._dedup(nodes,  lambda n: (n.name, n.type, n.description),                                              "node")
+    def _ingest(self, verbose: bool = False) -> None:
+        """Populate the database from the raw source files."""
+        if verbose:
+            print("Building knowledge base from source files …")
+
+        nodes  = Node.load_all(self._raw_dir / "taxonomy_nodes.csv")
+        nodes  = self._dedup(nodes,  lambda n: (n.name, n.type, n.description),                                                "node")
+        if verbose:
+            self._step(f"taxonomy_nodes.csv", len(nodes))
+
+        edges  = Edge.load_all(self._raw_dir / "taxonomy_edges.csv")
         edges  = self._dedup(edges,  lambda e: (e.from_id, e.to_id, e.relationship_type, e.confidence, e.map_source, e.notes), "edge")
-        chunks = self._dedup(chunks, lambda c: (c.doi, c.title, c.authors, c.year, c.chunk_index, c.text),                    "chunk")
+        if verbose:
+            self._step(f"taxonomy_edges.csv", len(edges))
+
+        chunks = PaperChunk.load_all(self._raw_dir / "paper_chunks.json")
+        chunks = self._dedup(chunks, lambda c: (c.doi, c.title, c.authors, c.year, c.chunk_index, c.text),                     "chunk")
+        if verbose:
+            self._step(f"paper_chunks.json ", len(chunks))
+
+        if verbose:
+            print("  Writing to database …", end=" ", flush=True)
 
         with self._conn:
             self._conn.executemany(
@@ -160,6 +184,10 @@ class KnowledgeBase:
                 "INSERT OR IGNORE INTO chunk_nodes(chunk_id, node_id) VALUES(?,?)",
                 [(c.id, nid) for c in chunks for nid in c.taxonomy_node_ids],
             )
+
+        if verbose:
+            print("done  \033[32m✓\033[0m")
+            print()
 
     # ------------------------------------------------------------------
     # Row → model converters
