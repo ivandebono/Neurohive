@@ -13,6 +13,7 @@ indexed SQL queries.
 from __future__ import annotations
 
 import sqlite3
+import warnings
 from pathlib import Path
 
 from neurohive.models import Edge, Node, PaperChunk
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     id          TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
     type        TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    source      TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS edges (
     id                INTEGER PRIMARY KEY,
@@ -105,16 +107,42 @@ class KnowledgeBase:
     # Ingestion
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _dedup(items: list, content_key, label: str) -> list:
+        """
+        Return a deduplicated copy of *items*, warning about any entry whose
+        content (all fields except id) matches a previously seen entry.
+        The first occurrence is kept; subsequent duplicates are dropped.
+        """
+        seen: dict = {}
+        result = []
+        for item in items:
+            key = content_key(item)
+            if key in seen:
+                warnings.warn(
+                    f"Duplicate {label} content skipped during ingestion: "
+                    f"{item!r} duplicates {seen[key]!r}",
+                    stacklevel=4,
+                )
+            else:
+                seen[key] = item
+                result.append(item)
+        return result
+
     def _ingest(self) -> None:
         """Populate the database from the raw source files."""
         nodes  = Node.load_all(self._raw_dir / "taxonomy_nodes.csv")
         edges  = Edge.load_all(self._raw_dir / "taxonomy_edges.csv")
         chunks = PaperChunk.load_all(self._raw_dir / "paper_chunks.json")
 
+        nodes  = self._dedup(nodes,  lambda n: (n.name, n.type, n.description),                                              "node")
+        edges  = self._dedup(edges,  lambda e: (e.from_id, e.to_id, e.relationship_type, e.confidence, e.map_source, e.notes), "edge")
+        chunks = self._dedup(chunks, lambda c: (c.doi, c.title, c.authors, c.year, c.chunk_index, c.text),                    "chunk")
+
         with self._conn:
             self._conn.executemany(
-                "INSERT INTO nodes(id, name, type, description) VALUES(?,?,?,?)",
-                [(n.id, n.name, n.type, n.description) for n in nodes],
+                "INSERT INTO nodes(id, name, type, description, source) VALUES(?,?,?,?,?)",
+                [(n.id, n.name, n.type, n.description, n.source) for n in nodes],
             )
             self._conn.executemany(
                 "INSERT INTO edges(from_id, to_id, relationship_type, confidence, map_source, notes) "
@@ -140,7 +168,8 @@ class KnowledgeBase:
     @staticmethod
     def _to_node(row: sqlite3.Row, isolated: bool = False) -> Node:
         return Node(id=row["id"], name=row["name"], type=row["type"],
-                    description=row["description"], isolated=isolated)
+                    description=row["description"], source=row["source"],
+                    isolated=isolated)
 
     @staticmethod
     def _to_edge(row: sqlite3.Row) -> Edge:
@@ -364,10 +393,16 @@ class _NodeIndex:
     def __getitem__(self, key: str) -> Node:
         if key in self._cache:
             return self._cache[key]
-        row = self._kb._conn.execute("SELECT * FROM nodes WHERE id = ?", (key,)).fetchone()
+        row = self._kb._conn.execute(
+            "SELECT n.*, (COUNT(e.id) = 0) AS isolated "
+            "FROM nodes n "
+            "LEFT JOIN edges e ON e.from_id = n.id OR e.to_id = n.id "
+            "WHERE n.id = ? GROUP BY n.id",
+            (key,),
+        ).fetchone()
         if row is None:
             raise KeyError(key)
-        node = KnowledgeBase._to_node(row)
+        node = KnowledgeBase._to_node(row, isolated=bool(row["isolated"]))
         self._cache[key] = node
         return node
 

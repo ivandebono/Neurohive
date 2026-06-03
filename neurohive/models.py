@@ -19,6 +19,7 @@ class Node:
     name: str
     type: NodeType
     description: str
+    source: str = ""
     isolated: bool = False  # True when the node has no edges in the graph
 
     @classmethod
@@ -28,7 +29,7 @@ class Node:
             name=row["name"],
             type=row["type"],
             description=row["description"],
-            # "source" column (always "v1") is intentionally not loaded.
+            source=row.get("source", ""),
         )
 
     @classmethod
