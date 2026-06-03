@@ -135,7 +135,8 @@ class Retriever:
     model_dir : Override the default model directory (useful for testing).
     """
 
-    def __init__(self, kb: KnowledgeBase, model_dir: Path | str | None = None) -> None:
+    def __init__(self, kb: KnowledgeBase, model_dir: Path | str | None = None,
+                 cache_dir: Path | str | None = None) -> None:
         self.kb = kb
 
         # BM25 indices (always built)
@@ -166,6 +167,7 @@ class Retriever:
         self._dense_model = None
         self._node_embs = None   # shape (n_nodes, emb_dim), float32, L2-normalised
         self._chunk_embs = None  # shape (n_chunks, emb_dim), float32, L2-normalised
+        self._cache_dir = Path(cache_dir) if cache_dir else None
 
         resolved = Path(model_dir) if model_dir else _default_model_dir()
         self._try_load_dense(resolved)
@@ -174,10 +176,62 @@ class Retriever:
     # Dense model loading
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Embedding cache helpers
+    # ------------------------------------------------------------------
+
+    def _corpus_hash(self) -> str:
+        """MD5 of all node IDs and chunk IDs — changes when data is added or removed."""
+        import hashlib  # noqa: PLC0415
+        token = "|".join(sorted(self._node_ids)) + "||" + "|".join(
+            str(c.id) for c in sorted(self.kb.chunks, key=lambda c: c.id)
+        )
+        return hashlib.md5(token.encode()).hexdigest()
+
+    def _load_emb_cache(self, model_dir: Path) -> bool:
+        """Return True and populate embedding arrays if a valid cache exists."""
+        if self._cache_dir is None:
+            return False
+        import json  # noqa: PLC0415
+        import numpy as np  # noqa: PLC0415
+        meta_path   = self._cache_dir / "emb_meta.json"
+        node_path   = self._cache_dir / "node_embs.npy"
+        chunk_path  = self._cache_dir / "chunk_embs.npy"
+        if not (meta_path.exists() and node_path.exists() and chunk_path.exists()):
+            return False
+        meta = json.loads(meta_path.read_text())
+        if meta.get("model") != str(model_dir.resolve()):
+            return False
+        if meta.get("corpus_hash") != self._corpus_hash():
+            return False
+        self._node_embs  = np.load(str(node_path))
+        self._chunk_embs = np.load(str(chunk_path))
+        return True
+
+    def _save_emb_cache(self, model_dir: Path) -> None:
+        """Persist embedding arrays and metadata to disk."""
+        if self._cache_dir is None:
+            return
+        import json  # noqa: PLC0415
+        import numpy as np  # noqa: PLC0415
+        self._cache_dir.mkdir(parents=True, exist_ok=True)
+        np.save(str(self._cache_dir / "node_embs.npy"),  self._node_embs)
+        np.save(str(self._cache_dir / "chunk_embs.npy"), self._chunk_embs)
+        (self._cache_dir / "emb_meta.json").write_text(json.dumps({
+            "model":       str(model_dir.resolve()),
+            "corpus_hash": self._corpus_hash(),
+        }))
+
+    # ------------------------------------------------------------------
+    # Dense model loading
+    # ------------------------------------------------------------------
+
     def _try_load_dense(self, model_dir: Path) -> None:
         """
-        Try to load the sentence-transformers model and pre-compute embeddings.
-        Silently does nothing if the directory is absent or the package is missing.
+        Load the sentence-transformers model and obtain corpus embeddings.
+        Embeddings are loaded from cache when available; otherwise computed
+        and saved for subsequent runs.  Silently does nothing if the model
+        directory is absent or sentence-transformers is not installed.
         """
         if not model_dir.exists():
             return
@@ -187,6 +241,9 @@ class Retriever:
             return
 
         self._dense_model = SentenceTransformer(str(model_dir))
+
+        if self._load_emb_cache(model_dir):
+            return  # cache hit — skip encoding
 
         node_docs = [
             " ".join([n.name, n.description] + self._node_notes[n.id])
@@ -200,6 +257,7 @@ class Retriever:
         self._chunk_embs = self._dense_model.encode(
             chunk_docs, normalize_embeddings=True, show_progress_bar=False
         )
+        self._save_emb_cache(model_dir)
 
     @property
     def is_hybrid(self) -> bool:

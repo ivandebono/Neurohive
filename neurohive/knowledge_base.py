@@ -91,6 +91,8 @@ class KnowledgeBase:
         if rebuild and db_path.exists():
             db_path.unlink()
 
+        self.cache_dir: Path = db_path.parent  # shared location for generated files
+
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)

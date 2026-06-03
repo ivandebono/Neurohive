@@ -140,7 +140,7 @@ class QueryPipeline:
         self._backend = backend or AnthropicBackend()
 
         self.kb = KnowledgeBase(data_dir)
-        self.retriever = Retriever(self.kb, model_dir=model_dir)
+        self.retriever = Retriever(self.kb, model_dir=model_dir, cache_dir=self.kb.cache_dir)
 
         # NLI cross-encoder for optional post-generation entailment checking
         self._nli_model = None

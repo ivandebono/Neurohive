@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
 
 # Virtual environments
 .venv
@@ -28,8 +29,12 @@ wheels/
 # Downloaded local model files
 models/
 
-# Generated SQLite database (rebuilt automatically from data/)
-*.db
+# Generated database and embedding cache (rebuilt with --ingest)
+data/database/
 
 # Query logs
 logs/
+
+# Test coverage output
+.coverage
+htmlcov/

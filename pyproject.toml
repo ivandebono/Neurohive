@@ -7,12 +7,13 @@ packages = ["neurohive"]
 
 [project]
 name = "neurohive"
-version = "0.1.0"
+version = "0.9.0"
 description = "RAG pipeline for grounded neuroscience Q&A over a taxonomy graph and paper corpus"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anthropic>=0.104.1",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]

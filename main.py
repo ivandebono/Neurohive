@@ -261,8 +261,20 @@ def main() -> None:
 
     from neurohive.knowledge_base import KnowledgeBase  # noqa: PLC0415
 
+    # Resolve the embeddings model directory early — needed by both --ingest and normal run.
+    models_root = Path(__file__).parent / "models"
+    embeddings_model_dir = (models_root / args.embeddings_model.split("/")[-1]) if args.embeddings_model else None
+    nli_model_dir        = (models_root / args.nli_model.split("/")[-1])        if args.nli_model        else None
+
     if args.ingest:
-        KnowledgeBase(DATA_DIR, verbose=True, rebuild=True)
+        from neurohive.retrieval import Retriever  # noqa: PLC0415
+        kb = KnowledgeBase(DATA_DIR, verbose=True, rebuild=True)
+        print("Computing embeddings ...", end=" ", flush=True)
+        r = Retriever(kb, model_dir=embeddings_model_dir, cache_dir=kb.cache_dir)
+        if r.is_hybrid:
+            print(f"done  \033[32m✓\033[0m\n  Cached to {kb.cache_dir}/")
+        else:
+            print("skipped (no embedding model — run `make setup-embeddings` for hybrid retrieval)")
         return
 
     # Auto-build on first run (database absent) before loading the full pipeline.
@@ -278,11 +290,6 @@ def main() -> None:
     node_top_k          = args.node_top_k          if args.node_top_k          is not None else cfg["pipeline"]["node_top_k"]
     chunk_top_k         = args.chunk_top_k         if args.chunk_top_k         is not None else cfg["pipeline"]["chunk_top_k"]
     confidence_threshold = args.confidence_threshold if args.confidence_threshold is not None else cfg["pipeline"]["confidence_threshold"]
-
-    # Derive local model directory from a HuggingFace model ID (last path component).
-    models_root = Path(__file__).parent / "models"
-    embeddings_model_dir = (models_root / args.embeddings_model.split("/")[-1]) if args.embeddings_model else None
-    nli_model_dir        = (models_root / args.nli_model.split("/")[-1])        if args.nli_model        else None
 
     from neurohive.pipeline import QueryPipeline  # noqa: PLC0415
     pipeline = QueryPipeline(
