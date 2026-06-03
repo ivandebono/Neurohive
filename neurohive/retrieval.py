@@ -208,6 +208,15 @@ class Retriever:
         self._chunk_embs = np.load(str(chunk_path))
         return True
 
+    def _print_emb_cache_hit(self) -> None:
+        """Print where existing embedding files were loaded from."""
+        if self._cache_dir is None:
+            return
+        print(f"Embedding cache already exists at {self._cache_dir}/", flush=True)
+        print(f"  Taxonomy node embeddings: {self._cache_dir / 'node_embs.npy'}", flush=True)
+        print(f"  Paper chunk embeddings:   {self._cache_dir / 'chunk_embs.npy'}", flush=True)
+        print(f"  Cache metadata:           {self._cache_dir / 'emb_meta.json'}", flush=True)
+
     def _save_emb_cache(self, model_dir: Path) -> None:
         """Persist embedding arrays and metadata to disk."""
         if self._cache_dir is None:
@@ -243,6 +252,7 @@ class Retriever:
         self._dense_model = SentenceTransformer(str(model_dir))
 
         if self._load_emb_cache(model_dir):
+            self._print_emb_cache_hit()
             return  # cache hit — skip encoding
 
         node_docs = [
@@ -250,14 +260,29 @@ class Retriever:
             for n in self.kb.nodes
         ]
         chunk_docs = [f"{c.title} {c.text}" for c in self.kb.chunks]
+        cache_target = f"{self._cache_dir}/" if self._cache_dir else "memory only"
 
+        print("No valid embedding cache found for this model and corpus.", flush=True)
+        print(f"Creating embeddings and storing them in: {cache_target}", flush=True)
+        print(
+            f"  Creating taxonomy node embeddings for {len(node_docs)} nodes "
+            f"-> {self._cache_dir / 'node_embs.npy' if self._cache_dir else 'not cached'}",
+            flush=True,
+        )
         self._node_embs = self._dense_model.encode(
             node_docs, normalize_embeddings=True, show_progress_bar=False
+        )
+        print(
+            f"  Creating paper chunk embeddings for {len(chunk_docs)} chunks "
+            f"-> {self._cache_dir / 'chunk_embs.npy' if self._cache_dir else 'not cached'}",
+            flush=True,
         )
         self._chunk_embs = self._dense_model.encode(
             chunk_docs, normalize_embeddings=True, show_progress_bar=False
         )
         self._save_emb_cache(model_dir)
+        if self._cache_dir:
+            print(f"  Wrote embedding metadata -> {self._cache_dir / 'emb_meta.json'}", flush=True)
 
     @property
     def is_hybrid(self) -> bool:

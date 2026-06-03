@@ -269,7 +269,7 @@ def main() -> None:
     if args.ingest:
         from neurohive.retrieval import Retriever  # noqa: PLC0415
         kb = KnowledgeBase(DATA_DIR, verbose=True, rebuild=True)
-        print("Computing embeddings ...", end=" ", flush=True)
+        print("Preparing embeddings ...", flush=True)
         r = Retriever(kb, model_dir=embeddings_model_dir, cache_dir=kb.cache_dir)
         if r.is_hybrid:
             print(f"done  \033[32m✓\033[0m\n  Cached to {kb.cache_dir}/")
