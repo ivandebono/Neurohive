@@ -5,6 +5,13 @@
 #   2. Environment / .env:  ANTHROPIC_MODEL, ANTHROPIC_API_KEY
 #   3. This file:           the values below
 
+[paths]
+# Relative to the repository root unless absolute.
+data_dir   = "data"
+env_file   = ".env"
+logs_dir   = "logs"
+models_dir = "models"
+
 [pipeline]
 # Number of taxonomy nodes and paper chunks fetched by the retriever per query.
 node_top_k  = 6
@@ -16,6 +23,28 @@ chunk_top_k = 6
 # threshold mainly filters weak RELATED_TO edges (range 0.70–0.92, all semantic).
 # Set to 0.0 to disable filtering and follow all edges regardless of confidence.
 confidence_threshold = 0.8
+
+[retrieval]
+# BM25 Okapi hyperparameters.
+bm25_k1 = 1.5
+bm25_b  = 0.75
+
+# Reciprocal Rank Fusion constants. Lower values sharpen rank differences.
+node_rrf_k  = 30
+chunk_rrf_k = 60
+
+# Chunks sharing a DOI with a top-k seed receive at least this fraction of the
+# seed paper's best score.
+sibling_discount = 0.5
+
+# Retrieval cache artifacts written under data/database/ during --ingest.
+bm25_cache_version = 1
+bm25_meta_file     = "bm25_meta.json"
+node_bm25_file     = "node_bm25.json"
+chunk_bm25_file    = "chunk_bm25.json"
+emb_meta_file      = "emb_meta.json"
+node_emb_file      = "node_embs.npy"
+chunk_emb_file     = "chunk_embs.npy"
 
 [anthropic]
 # Anthropic model ID.
@@ -47,5 +76,3 @@ model = "cross-encoder/nli-deberta-v3-small"
 # Minimum entailment probability (post-softmax) for a claim to pass.
 # Claims below this threshold emit a UserWarning.
 entailment_threshold = 0.5
-
-

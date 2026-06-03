@@ -7,29 +7,39 @@ import json
 import numpy as np
 import pytest
 
+from neurohive.config import load_config
 from neurohive.retrieval import Retriever, _BM25Index
+
+
+def _retrieval_cfg() -> dict:
+    return load_config()["retrieval"]
+
+
+def _build_bm25(docs: list[str]) -> _BM25Index:
+    cfg = _retrieval_cfg()
+    return _BM25Index.build(docs, k1=float(cfg["bm25_k1"]), b=float(cfg["bm25_b"]))
 
 
 class TestBM25Index:
     def test_relevant_doc_scores_above_zero(self):
-        idx = _BM25Index.build(["action potential sodium channel", "synaptic plasticity LTP"])
+        idx = _build_bm25(["action potential sodium channel", "synaptic plasticity LTP"])
         scores = idx.score("action potential")
         assert scores[0] > 0
         assert scores[0] > scores[1]
 
     def test_irrelevant_query_scores_zero(self):
-        idx = _BM25Index.build(["neural signaling", "synaptic plasticity"])
+        idx = _build_bm25(["neural signaling", "synaptic plasticity"])
         scores = idx.score("quantum mechanics")
         assert all(s == 0.0 for s in scores)
 
     def test_exact_match_scores_highest(self):
         docs = ["action potential", "synaptic plasticity", "voltage-gated channel"]
-        idx = _BM25Index.build(docs)
+        idx = _build_bm25(docs)
         scores = idx.score("synaptic plasticity")
         assert scores[1] == max(scores)
 
     def test_empty_corpus_returns_empty_scores(self):
-        idx = _BM25Index.build([])
+        idx = _build_bm25([])
         assert idx.score("anything") == []
 
 
@@ -100,9 +110,10 @@ class TestEmbeddingCache:
         model_dir = tmp_path / "model"
         model_dir.mkdir()
         r._save_emb_cache(model_dir)
-        assert (tmp_path / "node_embs.npy").exists()
-        assert (tmp_path / "chunk_embs.npy").exists()
-        assert (tmp_path / "emb_meta.json").exists()
+        cfg = _retrieval_cfg()
+        assert (tmp_path / cfg["node_emb_file"]).exists()
+        assert (tmp_path / cfg["chunk_emb_file"]).exists()
+        assert (tmp_path / cfg["emb_meta_file"]).exists()
 
     def test_meta_records_model_and_corpus_hash(self, kb, tmp_path):
         r = self._make_retriever(kb, tmp_path)
@@ -110,7 +121,7 @@ class TestEmbeddingCache:
         model_dir = tmp_path / "model"
         model_dir.mkdir()
         r._save_emb_cache(model_dir)
-        meta = json.loads((tmp_path / "emb_meta.json").read_text())
+        meta = json.loads((tmp_path / _retrieval_cfg()["emb_meta_file"]).read_text())
         assert meta["model"] == str(model_dir.resolve())
         assert "corpus_hash" in meta
 
@@ -140,7 +151,7 @@ class TestEmbeddingCache:
         model_dir = tmp_path / "model"; model_dir.mkdir()
         r._save_emb_cache(model_dir)
         # Corrupt the corpus hash in the metadata
-        meta_path = tmp_path / "emb_meta.json"
+        meta_path = tmp_path / _retrieval_cfg()["emb_meta_file"]
         meta = json.loads(meta_path.read_text())
         meta["corpus_hash"] = "deadbeef"
         meta_path.write_text(json.dumps(meta))
@@ -156,7 +167,7 @@ class TestEmbeddingCache:
         self._fake_embeddings(r)
         model_dir = tmp_path / "model"; model_dir.mkdir()
         r._save_emb_cache(model_dir)   # should silently do nothing
-        assert not (tmp_path / "node_embs.npy").exists()
+        assert not (tmp_path / _retrieval_cfg()["node_emb_file"]).exists()
 
     def test_corpus_hash_changes_when_nodes_differ(self, kb, tmp_path):
         r1 = self._make_retriever(kb, tmp_path)
@@ -165,3 +176,32 @@ class TestEmbeddingCache:
         r1._node_ids = r1._node_ids + ["FAKE_EXTRA_NODE"]
         h2 = r1._corpus_hash()
         assert h1 != h2
+
+
+class TestBM25Cache:
+    """BM25 indices are persisted in the retrieval cache directory."""
+
+    def test_retriever_writes_bm25_cache_files(self, kb, tmp_path):
+        Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        cfg = _retrieval_cfg()
+        assert (tmp_path / cfg["bm25_meta_file"]).exists()
+        assert (tmp_path / cfg["node_bm25_file"]).exists()
+        assert (tmp_path / cfg["chunk_bm25_file"]).exists()
+
+    def test_load_bm25_cache_succeeds(self, kb, tmp_path):
+        first = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        second = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        assert second._node_bm25._N == first._node_bm25._N
+        assert second._chunk_bm25._N == first._chunk_bm25._N
+        assert second.retrieve_chunks("action potential sodium", top_k=1)
+
+    def test_load_bm25_cache_rejects_stale_corpus_hash(self, kb, tmp_path):
+        Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        meta_path = tmp_path / _retrieval_cfg()["bm25_meta_file"]
+        meta = json.loads(meta_path.read_text())
+        meta["corpus_hash"] = "stale"
+        meta_path.write_text(json.dumps(meta))
+
+        r = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        refreshed = json.loads(meta_path.read_text())
+        assert refreshed["corpus_hash"] == r._corpus_hash()

@@ -292,7 +292,7 @@ class KnowledgeBase:
     def smart_expand(
         self,
         node_ids: set[str],
-        confidence_threshold: float = 0.8,
+        confidence_threshold: float | None = None,
     ) -> set[str]:
         """
         Expand a seed set of node IDs with semantically useful neighbours.
@@ -304,6 +304,10 @@ class KnowledgeBase:
         Only edges with ``confidence >= confidence_threshold`` are considered;
         semantic edges (``map_source = 'semantic'``) require an additional +0.1.
         """
+        if confidence_threshold is None:
+            from neurohive.config import load_config  # noqa: PLC0415
+            confidence_threshold = float(load_config()["pipeline"]["confidence_threshold"])
+
         expanded = set(node_ids)
         if not node_ids:
             return expanded

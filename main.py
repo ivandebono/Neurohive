@@ -29,9 +29,9 @@ Usage
 
 config.toml
 -----------
-    Provides defaults for all pipeline parameters.  Every config.toml value
+    Provides defaults for pipeline, retrieval, and runtime paths. Every config.toml value
     can be overridden at query time via CLI flags (listed below).  Priority
-    order (highest first): CLI flag → env var → config.toml → hard-coded default.
+    order (highest first): CLI flag → env var → config.toml → loader fallback.
 """
 
 from __future__ import annotations
@@ -44,17 +44,19 @@ import sys
 import warnings
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
-ENV_PATH = Path(__file__).parent / ".env"
-LOGS_DIR = Path(__file__).parent / "logs"
-_DB_PATH = DATA_DIR / "database" / "neurohive.db"
+_REPO_ROOT = Path(__file__).parent
 
 
-def _load_env() -> None:
+def _repo_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else _REPO_ROOT / path
+
+
+def _load_env(env_path: Path) -> None:
     """Load key=value pairs from .env into os.environ (does not overwrite)."""
-    if not ENV_PATH.exists():
+    if not env_path.exists():
         return
-    for line in ENV_PATH.read_text().splitlines():
+    for line in env_path.read_text().splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -166,10 +168,14 @@ def _interactive(
 
 
 def main() -> None:
-    _load_env()
-
     from neurohive.config import load_config  # noqa: PLC0415
     cfg = load_config()
+    data_dir = _repo_path(cfg["paths"]["data_dir"])
+    env_path = _repo_path(cfg["paths"]["env_file"])
+    logs_dir = _repo_path(cfg["paths"]["logs_dir"])
+    db_path = data_dir / "database" / "neurohive.db"
+
+    _load_env(env_path)
 
     parser = argparse.ArgumentParser(
         description="Query the Neurohive neuroscience knowledge base.",
@@ -262,24 +268,25 @@ def main() -> None:
     from neurohive.knowledge_base import KnowledgeBase  # noqa: PLC0415
 
     # Resolve the embeddings model directory early — needed by both --ingest and normal run.
-    models_root = Path(__file__).parent / "models"
+    models_root = _repo_path(cfg["paths"]["models_dir"])
     embeddings_model_dir = (models_root / args.embeddings_model.split("/")[-1]) if args.embeddings_model else None
     nli_model_dir        = (models_root / args.nli_model.split("/")[-1])        if args.nli_model        else None
 
     if args.ingest:
         from neurohive.retrieval import Retriever  # noqa: PLC0415
-        kb = KnowledgeBase(DATA_DIR, verbose=True, rebuild=True)
-        print("Preparing embeddings ...", flush=True)
+        kb = KnowledgeBase(data_dir, verbose=True, rebuild=True)
+        print("Preparing retrieval caches ...", flush=True)
         r = Retriever(kb, model_dir=embeddings_model_dir, cache_dir=kb.cache_dir)
+        print(f"BM25 indices cached to {kb.cache_dir}/")
         if r.is_hybrid:
-            print(f"done  \033[32m✓\033[0m\n  Cached to {kb.cache_dir}/")
+            print(f"Embeddings cached to {kb.cache_dir}/")
         else:
-            print("skipped (no embedding model — run `make setup-embeddings` for hybrid retrieval)")
+            print("Embeddings skipped (no embedding model - run `make setup-embeddings` for hybrid retrieval)")
         return
 
     # Auto-build on first run (database absent) before loading the full pipeline.
-    if not _DB_PATH.exists():
-        KnowledgeBase(DATA_DIR, verbose=True)
+    if not db_path.exists():
+        KnowledgeBase(data_dir, verbose=True)
 
     from neurohive.backends import AnthropicBackend  # noqa: PLC0415
 
@@ -293,7 +300,7 @@ def main() -> None:
 
     from neurohive.pipeline import QueryPipeline  # noqa: PLC0415
     pipeline = QueryPipeline(
-        data_dir=DATA_DIR,
+        data_dir=data_dir,
         backend=backend,
         node_top_k=node_top_k,
         chunk_top_k=chunk_top_k,
@@ -304,7 +311,7 @@ def main() -> None:
         model_dir=embeddings_model_dir,
     )
 
-    log_path = (LOGS_DIR / f"{datetime.date.today().isoformat()}.jsonl") if args.log else None
+    log_path = (logs_dir / f"{datetime.date.today().isoformat()}.jsonl") if args.log else None
     log_config = {
         "model":                model,
         "node_top_k":           node_top_k,

@@ -12,6 +12,8 @@ def test_defaults_when_file_missing(tmp_path):
     assert cfg["pipeline"]["node_top_k"] == 6
     assert cfg["pipeline"]["chunk_top_k"] == 6
     assert cfg["pipeline"]["confidence_threshold"] == 0.8
+    assert cfg["paths"]["data_dir"] == "data"
+    assert cfg["retrieval"]["bm25_meta_file"] == "bm25_meta.json"
     assert cfg["nli"]["entailment_threshold"] == 0.5
 
 
@@ -41,4 +43,4 @@ def test_absent_section_uses_defaults(tmp_path):
 
 def test_all_expected_sections_present(tmp_path):
     cfg = load_config(tmp_path / "nonexistent.toml")
-    assert set(cfg.keys()) >= {"pipeline", "anthropic", "embeddings", "nli"}
+    assert set(cfg.keys()) >= {"paths", "pipeline", "retrieval", "anthropic", "embeddings", "nli"}

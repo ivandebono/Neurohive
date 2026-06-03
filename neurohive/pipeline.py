@@ -124,22 +124,33 @@ class QueryPipeline:
 
     def __init__(
         self,
-        data_dir: Path | str = Path(__file__).parent.parent / "data",
+        data_dir: Path | str | None = None,
         backend: GenerationBackend | None = None,
-        node_top_k: int = 6,
-        chunk_top_k: int = 6,
-        confidence_threshold: float = 0.8,
+        node_top_k: int | None = None,
+        chunk_top_k: int | None = None,
+        confidence_threshold: float | None = None,
         verify_entailment: bool = False,
         nli_model_dir: Path | str | None = None,
         entailment_threshold: float | None = None,
         model_dir: Path | str | None = None,
     ):
-        self.node_top_k = node_top_k
-        self.chunk_top_k = chunk_top_k
-        self.confidence_threshold = confidence_threshold
+        from neurohive.config import load_config  # noqa: PLC0415
+        cfg = load_config()
+        repo_root = Path(__file__).parent.parent
+        resolved_data_dir = Path(data_dir) if data_dir is not None else Path(cfg["paths"]["data_dir"])
+        if not resolved_data_dir.is_absolute():
+            resolved_data_dir = repo_root / resolved_data_dir
+
+        self.node_top_k = node_top_k if node_top_k is not None else int(cfg["pipeline"]["node_top_k"])
+        self.chunk_top_k = chunk_top_k if chunk_top_k is not None else int(cfg["pipeline"]["chunk_top_k"])
+        self.confidence_threshold = (
+            confidence_threshold
+            if confidence_threshold is not None
+            else float(cfg["pipeline"]["confidence_threshold"])
+        )
         self._backend = backend or AnthropicBackend()
 
-        self.kb = KnowledgeBase(data_dir)
+        self.kb = KnowledgeBase(resolved_data_dir)
         self.retriever = Retriever(self.kb, model_dir=model_dir, cache_dir=self.kb.cache_dir)
 
         # NLI cross-encoder for optional post-generation entailment checking
@@ -194,7 +205,11 @@ class QueryPipeline:
             model_path = Path(nli_model_dir)
         else:
             model_name = hf_model_id.split("/")[-1]
-            model_path = Path(__file__).parent.parent / "models" / model_name
+            repo_root = Path(__file__).parent.parent
+            models_dir = Path(cfg["paths"]["models_dir"])
+            if not models_dir.is_absolute():
+                models_dir = repo_root / models_dir
+            model_path = models_dir / model_name
 
         if not (model_path.exists() and any(model_path.iterdir())):
             raise FileNotFoundError(
