@@ -228,6 +228,11 @@ class QueryPipeline:
         top_chunks_scored = self.retriever.retrieve_chunks(query, self.chunk_top_k)
 
         seed_ids = {n.id for n, _ in top_nodes_scored}
+        seed_ids.update(
+            nid
+            for chunk, _ in top_chunks_scored
+            for nid in chunk.taxonomy_node_ids
+        )
         expanded_ids = self.kb.smart_expand(seed_ids, self.confidence_threshold)
         all_nodes = [self.kb.nodes_by_id[nid] for nid in expanded_ids
                      if nid in self.kb.nodes_by_id]

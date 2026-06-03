@@ -222,7 +222,7 @@ class Retriever:
             " ".join([n.name, n.type, n.description] + self._node_notes[n.id])
             for n in kb.nodes
         ]
-        chunk_docs = [f"{c.title} {c.text}" for c in kb.chunks]
+        chunk_docs = [self._chunk_doc(c) for c in kb.chunks]
         if not self._load_bm25_cache():
             self._node_bm25 = _BM25Index.build(node_docs, k1=self._bm25_k1, b=self._bm25_b)
             self._chunk_bm25 = _BM25Index.build(chunk_docs, k1=self._bm25_k1, b=self._bm25_b)
@@ -252,12 +252,37 @@ class Retriever:
             for n in sorted(self.kb.nodes, key=lambda n: n.id)
         )
         chunk_parts = (
-            "\x1f".join([str(c.id), c.doi, c.title, c.text])
+            "\x1f".join([
+                str(c.id),
+                c.doi,
+                c.title,
+                c.authors,
+                str(c.year),
+                str(c.chunk_index),
+                c.text,
+                *c.taxonomy_node_ids,
+            ])
             for c in sorted(self.kb.chunks, key=lambda c: c.id)
         )
         node_ids = "\x1f".join(sorted(self._node_ids))
         token = node_ids + "\x1d" + "\x1e".join(node_parts) + "\x1d" + "\x1e".join(chunk_parts)
         return hashlib.md5(token.encode()).hexdigest()
+
+    def _chunk_doc(self, chunk: PaperChunk) -> str:
+        """Build the indexed text for a chunk, including its taxonomy links."""
+        linked_parts: list[str] = []
+        for nid in chunk.taxonomy_node_ids:
+            if nid not in self.kb.nodes_by_id:
+                continue
+            node = self.kb.nodes_by_id[nid]
+            linked_parts.extend([nid, node.name, node.type, node.description])
+        return " ".join([
+            chunk.title,
+            f"chunk_index_{chunk.chunk_index}",
+            *chunk.taxonomy_node_ids,
+            *linked_parts,
+            chunk.text,
+        ])
 
     def _load_bm25_cache(self) -> bool:
         """Return True and populate BM25 indices if a valid cache exists."""
@@ -389,7 +414,7 @@ class Retriever:
             " ".join([n.name, n.description] + self._node_notes[n.id])
             for n in self.kb.nodes
         ]
-        chunk_docs = [f"{c.title} {c.text}" for c in self.kb.chunks]
+        chunk_docs = [self._chunk_doc(c) for c in self.kb.chunks]
         cache_target = f"{self._cache_dir}/" if self._cache_dir else "memory only"
 
         print("No valid embedding cache found for this model and corpus.", flush=True)
@@ -496,22 +521,25 @@ class Retriever:
         if top_k <= 0 or n == 0:
             return []
 
-        # Best score per DOI among the initial top-k seeds
+        # Best seed scores per DOI. Distance in chunk_index keeps adjacent
+        # passages near the top without flattening a whole paper into one score.
         seed_indices = nlargest(top_k, range(n), key=lambda i: all_scores[i])
-        doi_best: dict[str, float] = {}
+        doi_seeds: dict[str, list[tuple[int, float]]] = {}
         for i in seed_indices:
             s = all_scores[i]
             doi = chunks[i].doi
-            if s > 0 and (doi not in doi_best or s > doi_best[doi]):
-                doi_best[doi] = s
+            if s > 0:
+                doi_seeds.setdefault(doi, []).append((chunks[i].chunk_index, s))
 
-        # Apply the floor to every chunk that shares a DOI with a seed
+        # Apply a distance-decayed floor to every chunk that shares a DOI with a seed.
         final_scores = list(all_scores)
         for i, chunk in enumerate(chunks):
-            if chunk.doi in doi_best:
-                floor = self._sibling_discount * doi_best[chunk.doi]
-                if floor > final_scores[i]:
-                    final_scores[i] = floor
+            floors = [
+                self._sibling_discount * seed_score / (abs(chunk.chunk_index - seed_index) + 1)
+                for seed_index, seed_score in doi_seeds.get(chunk.doi, [])
+            ]
+            if floors:
+                final_scores[i] = max(final_scores[i], max(floors))
 
         ranked = nlargest(
             top_k,

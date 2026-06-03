@@ -16,7 +16,11 @@ I use **BM25 Okapi** as the primary retrieval method. BM25 is well-suited here b
 
 I run two independent retrieval passes — one over taxonomy nodes, one over paper chunks — so the system can find relevant concepts and relevant papers independently.
 
+The retriever also uses structure from the paper data. Paper chunks are indexed with their linked taxonomy node IDs plus the linked node names, types, and descriptions, so a query that matches taxonomy language can retrieve the right paper chunk even when the phrase is absent from the chunk text. Retrieved chunks then contribute their `taxonomy_node_ids` to graph expansion, meaning paper evidence can pull in the right taxonomy neighbourhood. Chunks from the same DOI receive a context boost, but that boost decays with `chunk_index` distance so adjacent passages are preferred over distant passages from the same paper.
+
 For users who install the optional `sentence-transformers` extra and download the embedding model, retrieval upgrades automatically to **BM25 + dense cosine similarity**, fused via Reciprocal Rank Fusion (RRF). This handles semantic paraphrasing that BM25 misses. The switch is invisible, and the pipeline detects the model directory at startup.
+
+BM25 indices and optional dense embeddings are cached under the configured database/cache directory during `--ingest`. Subsequent runs load valid caches when the indexed corpus hash, retrieval parameters, and model path still match.
 
 ### 2. Graph Expansion
 
@@ -38,11 +42,11 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 
 ### Design Choices
 
-- **No external retrieval library**: BM25 from scratch in ~50 lines of standard-library Python. Keeps the install simple and the algorithm transparent.
-- **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings && make download-model`. The default works without it.
+- **No external retrieval library**: BM25 is implemented directly with standard-library Python. It precomputes document lengths, IDF values, and inverted postings, then persists those indices during ingestion.
+- **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings`. The default works without it.
 - **Anthropic API backend**: uses `tool_choice` to structurally guarantee the output matches the triple schema — the API enforces the format, not just the prompt.
-- **Configuration in one place**: `config.toml` is the single source for all model names and tunable parameters. Every value can also be overridden per-query via a CLI flag — no file edit needed for one-off experiments.
-- **SQLite-backed knowledge store**: raw source files live in `data/raw/`; the pipeline auto-builds `data/database/neurohive.db` on first run using the stdlib `sqlite3` module. No additional database dependency required.
+- **Configuration in one place**: `config.toml` is the source for model names, runtime paths, retrieval tuning, and cache artifact names. Query-level settings can also be overridden per query via CLI flags.
+- **SQLite-backed knowledge store**: raw source files live in the configured data directory; the pipeline auto-builds the SQLite database on first run using the stdlib `sqlite3` module. No additional database dependency required.
 
 
 ---
@@ -111,16 +115,17 @@ as a paper or taxonomy triple. Do not use any knowledge outside these two sectio
 
 `TAXONOMY CONTEXT` is assembled in three passes for each query:
 
-1. **Retrieval** — BM25 (or BM25 + dense via RRF) scores every node by how closely its name, type, and description match the query. The top-k nodes form the seed set.
-2. **Graph expansion** — `smart_expand()` traverses one hop from the seed set, adding: parent Pillars and Subpillars (via `HAS_SUBPILLAR` / `HAS_RESEARCH_AREA`), Theory nodes that explain the seed concept (incoming `EXPLAINS`), Dimension nodes that characterise it (outgoing `HAS_DIMENSION`), and lateral neighbours in both directions (bidirectional `RELATED_TO`). Edges are followed only if `confidence ≥ threshold`; algorithmically-inferred edges (`map_source="semantic"`) are held to a stricter bar (`threshold + 0.1`).
-3. **Formatting** — the expanded set is sorted by type depth (Pillar → Subpillar → Research_area → Theory → Dimension) and each node is rendered with its full breadcrumb ancestry path, its description, and every outgoing edge to another in-context node. Edge types are mapped to natural-language phrases (`EXPLAINS →` becomes `explains →`; `HAS_DIMENSION →` becomes `is characterised by →`). Edges with `confidence < 1.0` show their score. Algorithmically-derived edges (`map_source="semantic"`) are tagged `[inferred]`; other non-canonical sources show their source name. Nodes with no edges in either direction are tagged `[no connections]` so the model knows the absence of relationships is a property of the concept, not a retrieval gap.
+1. **Retrieval** — BM25 (or BM25 + dense via RRF) scores every node by how closely its name, type, description, and attached edge notes match the query. Paper chunks are scored separately using title, text, `chunk_index`, explicit `taxonomy_node_ids`, and the names/types/descriptions of linked taxonomy nodes.
+2. **Seed construction** — the graph seed set combines the top-k retrieved taxonomy nodes with every taxonomy node ID attached to the top-k retrieved paper chunks.
+3. **Graph expansion** — `smart_expand()` traverses one hop from the seed set, adding: parent Pillars and Subpillars (via `HAS_SUBPILLAR` / `HAS_RESEARCH_AREA`), Theory nodes that explain the seed concept (incoming `EXPLAINS`), Dimension nodes that characterise it (outgoing `HAS_DIMENSION`), and lateral neighbours in both directions (bidirectional `RELATED_TO`). Edges are followed only if `confidence ≥ threshold`; algorithmically-inferred edges (`map_source="semantic"`) are held to a stricter bar (`threshold + 0.1`).
+4. **Formatting** — the expanded set is sorted by type depth (Pillar → Subpillar → Research_area → Theory → Dimension) and each node is rendered with its full breadcrumb ancestry path, its description, and every outgoing edge to another in-context node. Edge types are mapped to natural-language phrases (`EXPLAINS →` becomes `explains →`; `HAS_DIMENSION →` becomes `is characterised by →`). Edges with `confidence < 1.0` show their score. Algorithmically-derived edges (`map_source="semantic"`) are tagged `[inferred]`; other non-canonical sources show their source name. Nodes with no edges in either direction are tagged `[no connections]` so the model knows the absence of relationships is a property of the concept, not a retrieval gap.
 
 `PAPER EVIDENCE` is built from two sources, then deduplicated:
 
 1. **Direct retrieval** — the top-k chunks from the BM25/RRF pass over the paper corpus.
 2. **Node-linked harvest** — every chunk whose `taxonomy_node_ids` list overlaps the expanded node set is added. This surfaces papers relevant to the expanded context even if they did not rank highly in direct retrieval.
 
-Within each paper, chunks are sorted by `chunk_index` to preserve reading order. Chunks from the same DOI are grouped under a single citation header.
+Within each paper, chunks are sorted by `chunk_index` to preserve reading order. Chunks from the same DOI are grouped under a single citation header. During retrieval, chunks from the same DOI are context-boosted with a score floor that decays by `chunk_index` distance from the initially retrieved seed chunk, so nearby paper context is favoured.
 
 **Raw model output schema** (enforced via `tool_choice` on the Anthropic backend):
 
@@ -159,7 +164,7 @@ The pipeline is built over two data sources in `data/raw/`:
 git clone <repo-url>
 cd neurohive
 make setup
-uv run python main.py --ingest   # build the database once from data/raw/
+uv run python main.py --ingest   # build database + retrieval caches from data/raw/
 ```
 
 ### API key
@@ -178,7 +183,7 @@ echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 make setup-embeddings   # installs sentence-transformers and downloads the model (~90 MB)
 ```
 
-Hybrid mode activates automatically on the next run — no code changes needed.
+Hybrid mode activates automatically on the next run when the configured model exists under `[paths] models_dir`. Run `uv run python main.py --ingest` after downloading the model to precompute and cache embeddings.
 
 ### Optional: NLI entailment verification
 
@@ -198,9 +203,9 @@ make setup-embeddings-nli   # installs and downloads both models in one step
 
 ## How to Run
 
-### First-run database setup
+### First-run database and retrieval cache setup
 
-On the very first run the knowledge-base database is built automatically from the raw files in `data/raw/` with a progress printout.  You can also trigger this explicitly (and rebuild after adding new data):
+On the very first run the knowledge-base database is built automatically from the raw files in the configured data directory. You can also trigger this explicitly to rebuild the database and refresh retrieval caches after adding raw data, changing chunk taxonomy links, changing retrieval parameters, or downloading an embedding model:
 
 ```bash
 uv run python main.py --ingest
@@ -231,16 +236,16 @@ uv run python main.py --show-sources "How does long-term potentiation relate to 
 uv run python main.py --model claude-sonnet-4-6 "Explain inhibitory interneuron diversity."
 ```
 
-### Tune retrieval parameters
+### Tune query-time parameters
 
-Every `config.toml` parameter can be overridden at the command line for a single query without editing the file:
+The most common query-time settings can be overridden at the command line for a single query without editing the file:
 
 ```bash
 uv run python main.py --node-top-k 10 --chunk-top-k 8 --confidence-threshold 0.75 "query..."
 uv run python main.py --model claude-sonnet-4-6 --entailment-threshold 0.6 --verify "query..."
 ```
 
-To change the permanent defaults, edit `config.toml`.
+To change permanent defaults, retrieval tuning, cache filenames, or runtime paths, edit `config.toml`.
 
 ### All CLI flags
 
@@ -256,8 +261,8 @@ To change the permanent defaults, edit `config.toml`.
 | `--show-sources` | off | Print retrieved nodes and chunks after the answer |
 | `--verify` | off | Enable NLI entailment verification (requires `make setup-nli`) |
 | `--debug` | off | Print raw model triples before verification |
-| `--log` | off | Append a JSONL record for each query to `logs/YYYY-MM-DD.jsonl` |
-| `--ingest` | — | Build (or rebuild) the database from `data/raw/`, then exit |
+| `--log` | off | Append a JSONL record for each query to `[paths] logs_dir/YYYY-MM-DD.jsonl` |
+| `--ingest` | — | Build (or rebuild) the database and retrieval caches, then exit |
 
 ### Python API
 
@@ -284,10 +289,33 @@ print(json.dumps(result.as_dict(), indent=2))
 All tunable parameters live in `config.toml` at the repo root:
 
 ```toml
+[paths]
+data_dir   = "data"
+env_file   = ".env"
+logs_dir   = "logs"
+models_dir = "models"
+
 [pipeline]
 node_top_k           = 6
 chunk_top_k          = 6
 confidence_threshold = 0.8
+
+[retrieval]
+bm25_k1 = 1.5
+bm25_b  = 0.75
+
+node_rrf_k  = 30
+chunk_rrf_k = 60
+
+sibling_discount = 0.5
+
+bm25_cache_version = 1
+bm25_meta_file     = "bm25_meta.json"
+node_bm25_file     = "node_bm25.json"
+chunk_bm25_file    = "chunk_bm25.json"
+emb_meta_file      = "emb_meta.json"
+node_emb_file      = "node_embs.npy"
+chunk_emb_file     = "chunk_embs.npy"
 
 [anthropic]
 model = "claude-haiku-4-5-20251001"
@@ -300,7 +328,9 @@ model                = "cross-encoder/nli-deberta-v3-small"
 entailment_threshold = 0.5
 ```
 
-Every parameter has a matching CLI flag (see the flags table above). Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml > built-in default`.
+CLI flags exist for common query-time settings (see the flags table above). Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml > loader fallback`.
+
+Retrieval and cache settings are config-only. Run `uv run python main.py --ingest` after changing `[retrieval]`, `[embeddings]`, `[nli]`, or paper chunk taxonomy links so generated caches match the new settings.
 
 ---
 
@@ -318,7 +348,13 @@ neurohive/
 │   │   ├── paper_chunks.json      83 excerpts from 24 peer-reviewed papers
 │   │   └── README.md              Data schema reference
 │   └── database/
-│       └── neurohive.db           SQLite database (auto-generated from raw/, gitignored)
+│       ├── neurohive.db           SQLite database (auto-generated from raw/, gitignored)
+│       ├── bm25_meta.json         BM25 cache metadata (generated by --ingest)
+│       ├── node_bm25.json         Taxonomy BM25 index cache
+│       ├── chunk_bm25.json        Paper chunk BM25 index cache
+│       ├── emb_meta.json          Embedding cache metadata, when hybrid retrieval is enabled
+│       ├── node_embs.npy          Taxonomy dense embeddings
+│       └── chunk_embs.npy         Paper chunk dense embeddings
 │
 ├── neurohive/
 │   ├── entities/
@@ -332,8 +368,8 @@ neurohive/
 │   └── config.py                  Config loader (reads config.toml)
 │
 ├── scripts/
-│   ├── download_model.py          Downloads the embedding model for hybrid retrieval
-│   └── download_nli_model.py      Downloads the NLI cross-encoder model
+│   ├── download_model.py          Downloads the configured embedding model
+│   └── download_nli_model.py      Downloads the configured NLI cross-encoder model
 │
 ├── tests/
 │   ├── conftest.py                Shared fixtures and MockBackend
@@ -349,4 +385,20 @@ neurohive/
 ├── config.toml                    All tunable parameters (single source of truth)
 ├── pyproject.toml
 └── Makefile                       Run `make help` to see all targets
+```
+
+---
+
+## Tests
+
+Run the full test suite:
+
+```bash
+uv run pytest
+```
+
+Run a focused subset:
+
+```bash
+uv run pytest tests/test_retrieval.py tests/test_pipeline.py
 ```

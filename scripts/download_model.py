@@ -2,9 +2,9 @@
 """
 Download the sentence-transformers embedding model for hybrid BM25 + dense retrieval.
 
-The model ID is read from config.toml ([embeddings] model).  The model is saved
-to  models/<model_name>/  at the repository root, where the Retriever picks it up
-automatically — no code changes needed.
+The model ID is read from config.toml ([embeddings] model). The model is saved
+under config.toml [paths] models_dir, where the Retriever picks it up
+automatically.
 
 Usage
 -----
@@ -24,7 +24,10 @@ def main() -> None:
 
     # Derive the local directory name from the model ID (strip the org prefix).
     model_name = hf_model_id.split("/")[-1]
-    model_dir = _REPO_ROOT / "models" / model_name
+    models_dir = Path(cfg["paths"]["models_dir"])
+    if not models_dir.is_absolute():
+        models_dir = _REPO_ROOT / models_dir
+    model_dir = models_dir / model_name
 
     if model_dir.exists() and any(model_dir.iterdir()):
         print(f"Model already present at {model_dir}")

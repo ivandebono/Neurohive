@@ -183,3 +183,16 @@ class TestFormatTaxonomyContext:
         p001 = pipeline.kb.nodes_by_id["P001"]
         ctx = pipeline._format_taxonomy_context([p001])
         assert "further connection" in ctx
+
+
+class TestRetrieveAndExpand:
+    def test_chunk_taxonomy_links_seed_graph_expansion(self, pipeline):
+        nodes, chunks = pipeline._retrieve_and_expand("channel kinetics mathematically")
+        node_ids = {n.id for n in nodes}
+        chunk_node_ids = {
+            nid
+            for chunk in chunks
+            for nid in chunk.taxonomy_node_ids
+        }
+        assert "TH001" in chunk_node_ids
+        assert "TH001" in node_ids

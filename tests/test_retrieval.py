@@ -89,6 +89,13 @@ class TestRetriever:
         results = r.retrieve_nodes("action potential", top_k=2)
         assert len(results) >= 1
 
+    def test_chunk_retrieval_uses_linked_taxonomy_node_text(self, kb, tmp_path):
+        r = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        results = r.retrieve_chunks("spike generation propagation", top_k=1)
+        assert results
+        chunk, _ = results[0]
+        assert "RA001" in chunk.taxonomy_node_ids
+
 
 class TestEmbeddingCache:
     """Unit-test the cache helpers by injecting synthetic embeddings."""

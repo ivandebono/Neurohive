@@ -2,9 +2,9 @@
 """
 Download the NLI cross-encoder model for post-generation entailment verification.
 
-The model ID is read from config.toml ([nli] model).  The model is saved to
-models/<model_name>/ at the repository root, where the pipeline picks it up
-automatically when --verify is passed.
+The model ID is read from config.toml ([nli] model). The model is saved under
+config.toml [paths] models_dir, where the pipeline picks it up automatically
+when --verify is passed.
 
 Usage
 -----
@@ -23,7 +23,10 @@ def main() -> None:
     hf_model_id: str = cfg["nli"].get("model", "cross-encoder/nli-deberta-v3-small")
 
     model_name = hf_model_id.split("/")[-1]
-    model_dir = _REPO_ROOT / "models" / model_name
+    models_dir = Path(cfg["paths"]["models_dir"])
+    if not models_dir.is_absolute():
+        models_dir = _REPO_ROOT / models_dir
+    model_dir = models_dir / model_name
 
     if model_dir.exists() and any(model_dir.iterdir()):
         print(f"NLI model already present at {model_dir}")
