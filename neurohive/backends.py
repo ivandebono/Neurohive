@@ -113,43 +113,54 @@ _ANTHROPIC_TOOL: dict = {
                     "Each triple is either a paper triple or a taxonomy triple."
                 ),
                 "items": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["paper", "taxonomy"],
-                            "description": (
-                                "'paper' for claims from PAPER EVIDENCE; "
-                                "'taxonomy' for claims from TAXONOMY CONTEXT."
-                            ),
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "description": "A claim grounded in PAPER EVIDENCE.",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "const": "paper",
+                                    "description": "Use for claims from PAPER EVIDENCE.",
+                                },
+                                "claim": {
+                                    "type": "string",
+                                    "description": "Your one-sentence statement derived from the source.",
+                                },
+                                "quote": {
+                                    "type": "string",
+                                    "description": "Verbatim passage from the paper that supports the claim.",
+                                },
+                                "citation": {
+                                    "type": "string",
+                                    "description": "'Surname et al., Year' exactly as shown in PAPER EVIDENCE.",
+                                },
+                            },
+                            "required": ["type", "claim", "quote", "citation"],
+                            "additionalProperties": False,
                         },
-                        "claim": {
-                            "type": "string",
-                            "description": "Your one-sentence statement derived from the source.",
+                        {
+                            "type": "object",
+                            "description": "A claim grounded in TAXONOMY CONTEXT.",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "const": "taxonomy",
+                                    "description": "Use for claims from TAXONOMY CONTEXT.",
+                                },
+                                "claim": {
+                                    "type": "string",
+                                    "description": "Your one-sentence statement derived from the source.",
+                                },
+                                "concept": {
+                                    "type": "string",
+                                    "description": "Exact concept name from TAXONOMY CONTEXT.",
+                                },
+                            },
+                            "required": ["type", "claim", "concept"],
+                            "additionalProperties": False,
                         },
-                        "quote": {
-                            "type": "string",
-                            "description": (
-                                "Verbatim passage from the paper that supports the claim. "
-                                "Required for paper triples; omit for taxonomy triples."
-                            ),
-                        },
-                        "citation": {
-                            "type": "string",
-                            "description": (
-                                "'Surname et al., Year' exactly as shown in PAPER EVIDENCE. "
-                                "Required for paper triples; omit for taxonomy triples."
-                            ),
-                        },
-                        "concept": {
-                            "type": "string",
-                            "description": (
-                                "Exact concept name from TAXONOMY CONTEXT. "
-                                "Required for taxonomy triples; omit for paper triples."
-                            ),
-                        },
-                    },
-                    "required": ["type", "claim"],
+                    ],
                 },
             },
         },

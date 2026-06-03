@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from neurohive.models import Node, PaperChunk
+from neurohive.entities import Node, PaperChunk
 from neurohive.pipeline import QueryPipeline
 
 

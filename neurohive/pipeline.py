@@ -7,7 +7,7 @@ Flow
 2. Graph expansion       — parents, theories, dimensions, lateral relations
 3. Chunk harvest         — paper chunks linked to the expanded node set
 4. Context formatting    — structured text blocks for taxonomy and papers
-5. Generation            — backend produces {"answer", "citation", "document"}
+5. Generation            — backend produces {"answer": [paper/taxonomy triples]}
 6. Citation verification — strips any reference not traceable to retrieved context
 """
 
@@ -21,7 +21,7 @@ from pathlib import Path
 
 from neurohive.backends import AnthropicBackend, GenerationBackend
 from neurohive.knowledge_base import KnowledgeBase
-from neurohive.models import Node, PaperChunk
+from neurohive.entities import Node, PaperChunk
 from neurohive.retrieval import Retriever
 
 _MAP_SOURCE_LABELS: dict[str, str] = {

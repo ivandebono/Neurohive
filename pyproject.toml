@@ -7,7 +7,7 @@ packages = ["neurohive"]
 
 [project]
 name = "neurohive"
-version = "0.9.0"
+version = "0.9.1"
 description = "RAG pipeline for grounded neuroscience Q&A over a taxonomy graph and paper corpus"
 readme = "README.md"
 requires-python = ">=3.13"

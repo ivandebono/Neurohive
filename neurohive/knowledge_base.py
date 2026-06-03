@@ -16,7 +16,7 @@ import sqlite3
 import warnings
 from pathlib import Path
 
-from neurohive.models import Edge, Node, PaperChunk
+from neurohive.entities import Edge, Node, PaperChunk
 
 _BIDIRECTIONAL_EDGE_TYPES = frozenset({"RELATED_TO"})
 _HIERARCHY_EDGE_TYPES = frozenset({"HAS_SUBPILLAR", "HAS_RESEARCH_AREA"})

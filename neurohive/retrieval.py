@@ -38,7 +38,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from neurohive.knowledge_base import KnowledgeBase
-from neurohive.models import Node, PaperChunk
+from neurohive.entities import Node, PaperChunk
 
 # BM25 hyperparameters
 _K1 = 1.5

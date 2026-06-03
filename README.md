@@ -30,7 +30,7 @@ The prompt is structured in three layers:
 
 1. **System prompt** — instructs the model to use only the supplied context and to explicitly state when the context is insufficient rather than speculating.
 2. **User prompt** — the query plus two clearly delimited sections: `TAXONOMY CONTEXT` (the expanded graph neighbourhood, formatted as a hierarchy with breadcrumbs, human-readable edge labels such as "explains" and "is related to", and `[inferred]` tags on algorithmically-derived edges) and `PAPER EVIDENCE` (chunks grouped by paper, in reading order, with linked concept names).
-3. **Structured output** — the Anthropic backend uses `tool_choice` to force the model into a JSON schema (`answer`, `citation`, `document`). This is structurally guaranteed by the API, not by prompt engineering.
+3. **Structured output** — the Anthropic backend uses `tool_choice` to force the model into a JSON schema (`answer`, an array of paper/taxonomy triples). Citations and taxonomy documents are derived later by verification. The raw model shape is structurally guaranteed by the API, not by prompt engineering.
 
 ### 4. Citation Verification
 
@@ -122,7 +122,7 @@ as a paper or taxonomy triple. Do not use any knowledge outside these two sectio
 
 Within each paper, chunks are sorted by `chunk_index` to preserve reading order. Chunks from the same DOI are grouped under a single citation header.
 
-**Output schema** (enforced via `tool_choice` on the Anthropic backend; embedded in the system prompt for local backends):
+**Raw model output schema** (enforced via `tool_choice` on the Anthropic backend):
 
 ```json
 {
@@ -321,7 +321,10 @@ neurohive/
 │       └── neurohive.db           SQLite database (auto-generated from raw/, gitignored)
 │
 ├── neurohive/
-│   ├── models.py                  Node, Edge, PaperChunk dataclasses
+│   ├── entities/
+│   │   ├── node.py                Node dataclass
+│   │   ├── edge.py                Edge dataclass
+│   │   └── paper_chunk.py         PaperChunk dataclass
 │   ├── knowledge_base.py          SQLite-backed store; graph expansion and lookups
 │   ├── retrieval.py               BM25 Okapi + optional hybrid RRF retriever
 │   ├── backends.py                AnthropicBackend (tool_choice JSON guarantee)

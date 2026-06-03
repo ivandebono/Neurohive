@@ -7,7 +7,7 @@ import warnings
 import pytest
 
 from neurohive.knowledge_base import KnowledgeBase
-from neurohive.models import Node
+from neurohive.entities import Node
 
 
 # ---------------------------------------------------------------------------

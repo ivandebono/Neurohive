@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from neurohive.models import Edge, Node, PaperChunk
+from neurohive.entities import Edge, Node, PaperChunk
 
 
 class TestNode:
