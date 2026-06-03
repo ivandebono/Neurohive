@@ -224,8 +224,11 @@ class QueryPipeline:
     # ------------------------------------------------------------------
 
     def _retrieve_and_expand(self, query: str) -> tuple[list[Node], list[PaperChunk]]:
-        top_nodes_scored = self.retriever.retrieve_nodes(query, self.node_top_k)
-        top_chunks_scored = self.retriever.retrieve_chunks(query, self.chunk_top_k)
+        top_nodes_scored, top_chunks_scored = self.retriever.retrieve(
+            query,
+            self.node_top_k,
+            self.chunk_top_k,
+        )
 
         seed_ids = {n.id for n, _ in top_nodes_scored}
         seed_ids.update(
@@ -470,6 +473,8 @@ class QueryPipeline:
         for c in chunks:
             norm_to_chunks.setdefault(self._normalise(c.citation), []).append(c)
 
+        work_items: list[tuple[dict, str, list[tuple[str, str]]]] = []
+        all_pairs: list[tuple[str, str]] = []
         for triple in triples:
             if triple.get("type") != "paper":
                 continue
@@ -480,11 +485,24 @@ class QueryPipeline:
                 continue
 
             pairs = [(c.text, claim) for c in matching]
-            scores = self._nli_model.predict(pairs, apply_softmax=True)
-            scores_arr = np.atleast_2d(scores)
+            work_items.append((triple, citation, pairs))
+            all_pairs.extend(pairs)
+
+        if not all_pairs:
+            return
+
+        scores = self._nli_model.predict(all_pairs, apply_softmax=True)
+        scores_arr = np.atleast_2d(scores)
+
+        offset = 0
+        for triple, citation, pairs in work_items:
+            pair_count = len(pairs)
+            triple_scores = scores_arr[offset:offset + pair_count]
+            offset += pair_count
             # Column 1 = entailment probability (DeBERTa label ordering:
             # 0=contradiction, 1=entailment, 2=neutral).
-            best_entailment = float(np.max(scores_arr[:, 1]))
+            best_entailment = float(np.max(triple_scores[:, 1]))
+            claim = triple["claim"]
 
             if best_entailment < self._nli_threshold:
                 warnings.warn(

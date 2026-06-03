@@ -89,6 +89,12 @@ class TestRetriever:
         results = r.retrieve_nodes("action potential", top_k=2)
         assert len(results) >= 1
 
+    def test_combined_retrieve_matches_public_paths(self, kb, tmp_path):
+        r = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
+        nodes, chunks = r.retrieve("action potential sodium", node_top_k=2, chunk_top_k=2)
+        assert nodes == r.retrieve_nodes("action potential sodium", top_k=2)
+        assert chunks == r.retrieve_chunks("action potential sodium", top_k=2)
+
     def test_chunk_retrieval_uses_linked_taxonomy_node_text(self, kb, tmp_path):
         r = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
         results = r.retrieve_chunks("spike generation propagation", top_k=1)

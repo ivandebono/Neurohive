@@ -196,3 +196,41 @@ class TestRetrieveAndExpand:
         }
         assert "TH001" in chunk_node_ids
         assert "TH001" in node_ids
+
+
+class _FakeNLIModel:
+    def __init__(self):
+        self.calls: list[list[tuple[str, str]]] = []
+
+    def predict(self, pairs, apply_softmax=True):
+        import numpy as np
+        self.calls.append(list(pairs))
+        return np.array([[0.0, 0.9, 0.1] for _ in pairs])
+
+
+class TestEntailmentCheck:
+    def test_batches_all_paper_triples_into_one_predict_call(self, pipeline):
+        chunk_a = _make_chunk("Smith et al., 2020", text="Source A")
+        chunk_b = PaperChunk(
+            id=2,
+            doi="10.2/y",
+            title="T2",
+            authors="Jones, A",
+            year=2021,
+            chunk_index=0,
+            text="Source B",
+            taxonomy_node_ids=(),
+        )
+        fake = _FakeNLIModel()
+        pipeline._nli_model = fake
+        pipeline._nli_threshold = 0.5
+
+        triples = [
+            {"type": "paper", "claim": "A.", "citation": "Smith et al., 2020"},
+            {"type": "paper", "claim": "B.", "citation": "Jones et al., 2021"},
+        ]
+
+        pipeline._entailment_check(triples, [chunk_a, chunk_b])
+
+        assert len(fake.calls) == 1
+        assert fake.calls[0] == [("Source A", "A."), ("Source B", "B.")]

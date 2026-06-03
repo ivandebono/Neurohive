@@ -35,6 +35,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 from heapq import nlargest
 from pathlib import Path
 from typing import Any
@@ -557,6 +558,9 @@ class Retriever:
             return []
         bm25_scores = self._node_bm25.score(query)
         q_emb = self._dense_model.encode([query], normalize_embeddings=True)[0]
+        return self._hybrid_nodes_from_scores(bm25_scores, q_emb, top_k)
+
+    def _hybrid_nodes_from_scores(self, bm25_scores: list[float], q_emb, top_k: int) -> list[tuple[Node, float]]:
         dense_scores = (self._node_embs @ q_emb).tolist()
         nodes = [self.kb.nodes_by_id[nid] for nid in self._node_ids]
         return self._rrf_merge(bm25_scores, dense_scores, nodes, top_k, self._node_rrf_k)
@@ -566,6 +570,9 @@ class Retriever:
             return []
         bm25_scores = self._chunk_bm25.score(query)
         q_emb = self._dense_model.encode([query], normalize_embeddings=True)[0]
+        return self._hybrid_chunks_from_scores(bm25_scores, q_emb, top_k)
+
+    def _hybrid_chunks_from_scores(self, bm25_scores: list[float], q_emb, top_k: int) -> list[tuple[PaperChunk, float]]:
         dense_scores = (self._chunk_embs @ q_emb).tolist()
         rrf_scores = self._rrf_scores(bm25_scores, dense_scores, self._chunk_rrf_k)
         return self._sibling_boost(rrf_scores, top_k)
@@ -581,3 +588,32 @@ class Retriever:
     def retrieve_chunks(self, query: str, top_k: int = 6) -> list[tuple[PaperChunk, float]]:
         """Return (chunk, score) pairs ranked by BM25 or RRF, highest first."""
         return self._hybrid_chunks(query, top_k) if self.is_hybrid else self._bm25_chunks(query, top_k)
+
+    def retrieve(
+        self,
+        query: str,
+        node_top_k: int = 6,
+        chunk_top_k: int = 6,
+    ) -> tuple[list[tuple[Node, float]], list[tuple[PaperChunk, float]]]:
+        """
+        Return ranked taxonomy nodes and paper chunks for a query.
+
+        This combined path keeps node and chunk retrieval independent while
+        avoiding duplicate dense query encoding in hybrid mode.
+        """
+        if self.is_hybrid:
+            q_emb = self._dense_model.encode([query], normalize_embeddings=True)[0]
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                node_scores_f = executor.submit(self._node_bm25.score, query)
+                chunk_scores_f = executor.submit(self._chunk_bm25.score, query)
+                node_scores = node_scores_f.result()
+                chunk_scores = chunk_scores_f.result()
+            return (
+                self._hybrid_nodes_from_scores(node_scores, q_emb, node_top_k),
+                self._hybrid_chunks_from_scores(chunk_scores, q_emb, chunk_top_k),
+            )
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            nodes_f = executor.submit(self._bm25_nodes, query, node_top_k)
+            chunks_f = executor.submit(self._bm25_chunks, query, chunk_top_k)
+            return nodes_f.result(), chunks_f.result()
