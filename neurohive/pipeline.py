@@ -250,7 +250,7 @@ class QueryPipeline:
                     hidden += 1
             if hidden:
                 lines.append(f"  [+ {hidden} further connection{'s' if hidden > 1 else ''} not retrieved for this query]")
-            if not node.isolated(self.kb.edges):
+            if node.isolated:
                 lines.append("  [no connections]")
             lines.append("")
         return "\n".join(lines)

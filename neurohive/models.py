@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import json
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,13 +19,14 @@ class Node:
     name: str
     type: NodeType
     description: str
+    isolated: bool = False  # True when the node has no edges in the graph
 
     @classmethod
     def from_row(cls, row: dict[str, str]) -> Node:
         return cls(
             id=row["id"],
             name=row["name"],
-            type=row["type"],  # type: ignore[arg-type]
+            type=row["type"],
             description=row["description"],
             # "source" column (always "v1") is intentionally not loaded.
         )
@@ -35,10 +35,6 @@ class Node:
     def load_all(cls, path: Path) -> list[Node]:
         with open(path, newline="") as f:
             return [cls.from_row(row) for row in csv.DictReader(f)]
-
-    def isolated(self, edges: Iterable[Edge]) -> bool:
-        """Return True if this node has at least one edge, False if it has none."""
-        return any(e.from_id == self.id or e.to_id == self.id for e in edges)
 
 
 @dataclass(frozen=True)

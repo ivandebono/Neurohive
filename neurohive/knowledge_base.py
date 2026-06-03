@@ -138,8 +138,9 @@ class KnowledgeBase:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _to_node(row: sqlite3.Row) -> Node:
-        return Node(id=row["id"], name=row["name"], type=row["type"], description=row["description"])
+    def _to_node(row: sqlite3.Row, isolated: bool = False) -> Node:
+        return Node(id=row["id"], name=row["name"], type=row["type"],
+                    description=row["description"], isolated=isolated)
 
     @staticmethod
     def _to_edge(row: sqlite3.Row) -> Edge:
@@ -157,9 +158,15 @@ class KnowledgeBase:
     @property
     def nodes(self) -> list[Node]:
         if self._nodes_cache is None:
-            rows = self._conn.execute("SELECT * FROM nodes").fetchall()
-            self._nodes_cache = [self._to_node(r) for r in rows]
-            # Warm the nodes_by_id dict cache at the same time
+            # Single query: left-join edges to detect nodes with no connections.
+            rows = self._conn.execute(
+                "SELECT n.*, "
+                "  (COUNT(e.id) = 0) AS isolated "
+                "FROM nodes n "
+                "LEFT JOIN edges e ON e.from_id = n.id OR e.to_id = n.id "
+                "GROUP BY n.id"
+            ).fetchall()
+            self._nodes_cache = [self._to_node(r, isolated=bool(r["isolated"])) for r in rows]
             self.nodes_by_id._warm({n.id: n for n in self._nodes_cache})
         return self._nodes_cache
 
@@ -210,7 +217,7 @@ class KnowledgeBase:
             ).fetchone()
             if row is None:
                 break
-            result.append(self._to_node(row))
+            result.append(self.nodes_by_id[row["from_id"]])
             current = row["from_id"]
         return result
 
