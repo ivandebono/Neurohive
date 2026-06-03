@@ -173,9 +173,9 @@ class QueryPipeline:
 
         The model directory is resolved in this order:
           1. ``nli_model_dir`` argument (explicit override)
-          2. ``models/<model_name>/`` at the repository root
-             where ``<model_name>`` is the last component of the HuggingFace ID
-             in config.toml (e.g. "nli-deberta-v3-small")
+          2. ``<models_dir>/<model_name>/`` where ``models_dir`` comes from
+             config.toml [paths] and ``model_name`` is the last component of
+             the HuggingFace ID in config.toml (e.g. "nli-deberta-v3-small")
 
         The model must be pre-downloaded with::
 

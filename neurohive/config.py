@@ -52,6 +52,7 @@ _DEFAULTS: dict = {
     # API model names are intentionally absent from these defaults.
     # config.toml is the single source of truth for Anthropic model identifiers.
     "anthropic":  {},
+    "ollama":     {"model": "llama3.2:3b", "host": "http://localhost:11434"},
     "embeddings": {"model": "sentence-transformers/all-MiniLM-L6-v2"},
     "nli":        {"entailment_threshold": 0.5},
 }
@@ -68,8 +69,8 @@ def load_config(path: Path | str | None = None) -> dict:
     Returns
     -------
     dict with keys "paths", "pipeline", "retrieval", "anthropic",
-    "embeddings", and "nli", each a nested dict. Missing keys are filled
-    in from ``_DEFAULTS``.
+    "ollama", "embeddings", and "nli", each a nested dict. Missing keys
+    are filled in from ``_DEFAULTS``.
     """
     resolved = Path(path) if path else _CONFIG_PATH
 

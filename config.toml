@@ -51,9 +51,19 @@ chunk_emb_file     = "chunk_embs.npy"
 # Override with the ANTHROPIC_MODEL environment variable or the --model CLI flag.
 model = "claude-haiku-4-5-20251001"
 
+[ollama]
+# Local open-source generation backend. Use at runtime with:
+#   uv run python main.py --ollama "query..."
+# or choose another pulled model:
+#   uv run python main.py --ollama llama3.1:8b "query..."
+#
+# Default is a small, free, open-source local model available through Ollama.
+model = "ministral-3:3b-instruct-2512-q4_K_M"
+host = "http://localhost:11434"
+
 [embeddings]
 # sentence-transformers model used for hybrid BM25 + dense retrieval.
-# The model is saved to models/<model_name>/ by scripts/download_model.py.
+# The model is saved under [paths] models_dir by scripts/download_model.py.
 # Change this only if you want a different embedding model; the download
 # script reads this value automatically.
 model = "sentence-transformers/all-MiniLM-L6-v2"

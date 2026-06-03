@@ -34,7 +34,7 @@ The prompt is structured in three layers:
 
 1. **System prompt** — instructs the model to use only the supplied context and to explicitly state when the context is insufficient rather than speculating.
 2. **User prompt** — the query plus two clearly delimited sections: `TAXONOMY CONTEXT` (the expanded graph neighbourhood, formatted as a hierarchy with breadcrumbs, human-readable edge labels such as "explains" and "is related to", and `[inferred]` tags on algorithmically-derived edges) and `PAPER EVIDENCE` (chunks grouped by paper, in reading order, with linked concept names).
-3. **Structured output** — the Anthropic backend uses `tool_choice` to force the model into a JSON schema (`answer`, an array of paper/taxonomy triples). Citations and taxonomy documents are derived later by verification. The raw model shape is structurally guaranteed by the API, not by prompt engineering.
+3. **Structured output** — generation runs either through the Anthropic API or a local Ollama model. The Anthropic backend uses `tool_choice` to force the model into the JSON schema (`answer`, an array of paper/taxonomy triples). The Ollama backend requests JSON mode and validates the returned schema before the result enters verification. Citations and taxonomy documents are derived later by verification.
 
 ### 4. Citation Verification
 
@@ -44,7 +44,7 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 
 - **No external retrieval library**: BM25 is implemented directly with standard-library Python. It precomputes document lengths, IDF values, and inverted postings, then persists those indices during ingestion.
 - **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings`. The default works without it.
-- **Anthropic API backend**: uses `tool_choice` to structurally guarantee the output matches the triple schema — the API enforces the format, not just the prompt.
+- **Generation backend choice**: use Anthropic for stronger API-hosted generation, or pass `--ollama` to use a local open-source model through Ollama. The default Ollama model is `ministral-3:3b`.
 - **Configuration in one place**: `config.toml` is the source for model names, runtime paths, retrieval tuning, and cache artifact names. Query-level settings can also be overridden per query via CLI flags.
 - **SQLite-backed knowledge store**: raw source files live in the configured data directory; the pipeline auto-builds the SQLite database on first run using the stdlib `sqlite3` module. No additional database dependency required.
 
@@ -55,7 +55,7 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 
 Every query is sent to the language model using this structure.
 
-**System prompt** (sent with `cache_control: ephemeral` for prompt caching on the Anthropic backend):
+**System prompt** (sent to Anthropic or Ollama; Anthropic also uses prompt caching):
 
 ```
 You are a closed-context neuroscience query system. The TAXONOMY CONTEXT and
@@ -109,6 +109,7 @@ PAPER EVIDENCE
 ---
 Answer the query using ONLY the context above. Express every factual claim
 as a paper or taxonomy triple. Do not use any knowledge outside these two sections.
+Return only a JSON object with one top-level key, "answer".
 ```
 
 **How the context sections are built:**
@@ -127,7 +128,7 @@ as a paper or taxonomy triple. Do not use any knowledge outside these two sectio
 
 Within each paper, chunks are sorted by `chunk_index` to preserve reading order. Chunks from the same DOI are grouped under a single citation header. During retrieval, chunks from the same DOI are context-boosted with a score floor that decays by `chunk_index` distance from the initially retrieved seed chunk, so nearby paper context is favoured.
 
-**Raw model output schema** (enforced via `tool_choice` on the Anthropic backend):
+**Raw model output schema** (enforced by Anthropic `tool_choice`; requested and validated for Ollama):
 
 ```json
 {
@@ -160,6 +161,10 @@ The pipeline is built over two data sources in `data/raw/`:
 
 **Requirements:** Python 3.13+, [`uv`](https://docs.astral.sh/uv/)
 
+### Choose a generation backend
+
+**Anthropic API** is the default runtime backend:
+
 ```bash
 git clone <repo-url>
 cd neurohive
@@ -167,7 +172,7 @@ make setup
 uv run python main.py --ingest   # build database + retrieval caches from data/raw/
 ```
 
-### API key
+It requires an API key:
 
 ```bash
 # Option A: environment variable
@@ -176,6 +181,17 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 # Option B: .env file at the repo root (loaded automatically)
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 ```
+
+**Local Ollama** avoids paid API calls and uses the configured open-source model (`llama3.2:3b` by default):
+
+```bash
+git clone <repo-url>
+cd neurohive
+make setup-ollama              # installs Python deps and runs: ollama pull llama3.2:3b
+uv run python main.py --ingest # build database + retrieval caches
+```
+
+You must install and start Ollama first. After setup, use `--ollama` at runtime.
 
 ### Optional: hybrid retrieval (BM25 + dense)
 
@@ -198,6 +214,14 @@ Pass `--verify` at the CLI to enable post-generation entailment checking.
 ```bash
 make setup-embeddings-nli   # installs and downloads both models in one step
 ```
+
+### Optional: local Ollama + hybrid retrieval + NLI
+
+```bash
+make setup-ollama-embeddings-nli
+```
+
+This installs the embedding/NLI Python extras, pulls the configured Ollama generation model, downloads the configured embedding model, and downloads the configured NLI cross-encoder. Use `--ollama` for local generation and `--verify` for NLI verification.
 
 ---
 
@@ -236,6 +260,20 @@ uv run python main.py --show-sources "How does long-term potentiation relate to 
 uv run python main.py --model claude-sonnet-4-6 "Explain inhibitory interneuron diversity."
 ```
 
+### Use local Ollama instead of Anthropic
+
+Use the configured default Ollama model:
+
+```bash
+uv run python main.py --ollama "Explain inhibitory interneuron diversity."
+```
+
+Use a specific local Ollama model:
+
+```bash
+uv run python main.py --ollama llama3.1:8b "Explain inhibitory interneuron diversity."
+```
+
 ### Tune query-time parameters
 
 The most common query-time settings can be overridden at the command line for a single query without editing the file:
@@ -252,6 +290,7 @@ To change permanent defaults, retrieval tuning, cache filenames, or runtime path
 | Flag | Default | Description |
 |---|---|---|
 | `--model MODEL` | config.toml `[anthropic] model` | Anthropic model ID (also reads `ANTHROPIC_MODEL` env var) |
+| `--ollama [MODEL]` | config.toml `[ollama] model` | Use local Ollama instead of Anthropic; optionally pass an Ollama model name |
 | `--node-top-k N` | config.toml `[pipeline] node_top_k` | Taxonomy nodes retrieved per query |
 | `--chunk-top-k N` | config.toml `[pipeline] chunk_top_k` | Paper chunks retrieved per query |
 | `--confidence-threshold F` | config.toml `[pipeline] confidence_threshold` | Minimum edge confidence for graph expansion (0.0–1.0) |
@@ -280,6 +319,16 @@ print(result.retrieval_mode)   # "hybrid (BM25 + dense, RRF)" or "bm25"
 
 import json
 print(json.dumps(result.as_dict(), indent=2))
+```
+
+Use Ollama from Python:
+
+```python
+from neurohive.backends import OllamaBackend
+from neurohive.pipeline import QueryPipeline
+
+pipeline = QueryPipeline(backend=OllamaBackend())  # config.toml [ollama] model
+result = pipeline.run("What are the mechanisms of synaptic scaling?")
 ```
 
 ---
@@ -319,6 +368,10 @@ chunk_emb_file     = "chunk_embs.npy"
 
 [anthropic]
 model = "claude-haiku-4-5-20251001"
+
+[ollama]
+model = "llama3.2:3b"
+host  = "http://localhost:11434"
 
 [embeddings]
 model = "sentence-transformers/all-MiniLM-L6-v2"
@@ -363,16 +416,18 @@ neurohive/
 │   │   └── paper_chunk.py         PaperChunk dataclass
 │   ├── knowledge_base.py          SQLite-backed store; graph expansion and lookups
 │   ├── retrieval.py               BM25 Okapi + optional hybrid RRF retriever
-│   ├── backends.py                AnthropicBackend (tool_choice JSON guarantee)
+│   ├── backends.py                AnthropicBackend and OllamaBackend
 │   ├── pipeline.py                QueryPipeline: end-to-end orchestration + _verify()
 │   └── config.py                  Config loader (reads config.toml)
 │
 ├── scripts/
+│   ├── setup_ollama_model.py      Pulls the configured local Ollama model
 │   ├── download_model.py          Downloads the configured embedding model
 │   └── download_nli_model.py      Downloads the configured NLI cross-encoder model
 │
 ├── tests/
 │   ├── conftest.py                Shared fixtures and MockBackend
+│   ├── test_backends.py
 │   ├── test_models.py
 │   ├── test_config.py
 │   ├── test_knowledge_base.py

@@ -12,10 +12,14 @@ Usage
     # Interactive REPL
     python main.py
 
-    # Override model
+    # Override Anthropic model
     python main.py --model claude-sonnet-4-6 "query..."
 
-    # Hybrid retrieval is enabled automatically when models/ exists:
+    # Use local Ollama generation instead of Anthropic
+    python main.py --ollama "query..."
+    python main.py --ollama llama3.1:8b "query..."
+
+    # Hybrid retrieval is enabled automatically when the configured model exists:
     #   uv sync --extra embeddings
     #   uv run python scripts/download_model.py
 
@@ -24,8 +28,8 @@ Usage
 
 .env keys
 ---------
-    ANTHROPIC_API_KEY   required
-    ANTHROPIC_MODEL     optional model override, e.g. claude-sonnet-4-6
+    ANTHROPIC_API_KEY   required only for Anthropic
+    ANTHROPIC_MODEL     optional Anthropic model override, e.g. claude-sonnet-4-6
 
 config.toml
 -----------
@@ -195,6 +199,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ollama",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="MODEL",
+        help=(
+            "Use local Ollama instead of Anthropic. Optionally pass a model name. "
+            "Default model: config.toml [ollama] model."
+        ),
+    )
+    parser.add_argument(
         "--node-top-k", type=int, default=None, metavar="N",
         help="Number of taxonomy nodes retrieved per query. Default: config.toml [pipeline] node_top_k.",
     )
@@ -214,7 +229,7 @@ def main() -> None:
         help=(
             "HuggingFace model ID for dense retrieval "
             "(e.g. sentence-transformers/all-MiniLM-L6-v2). "
-            "The model must already be downloaded under models/. "
+            "The model must already be downloaded under config.toml [paths] models_dir. "
             "Default: config.toml [embeddings] model."
         ),
     )
@@ -223,7 +238,7 @@ def main() -> None:
         help=(
             "HuggingFace model ID for NLI entailment checking "
             "(e.g. cross-encoder/nli-deberta-v3-small). "
-            "Used only with --verify; model must be downloaded under models/. "
+            "Used only with --verify; model must be downloaded under config.toml [paths] models_dir. "
             "Default: config.toml [nli] model."
         ),
     )
@@ -288,11 +303,16 @@ def main() -> None:
     if not db_path.exists():
         KnowledgeBase(data_dir, verbose=True)
 
-    from neurohive.backends import AnthropicBackend  # noqa: PLC0415
-
-    _check_api_key()
-    model = args.model or os.environ.get("ANTHROPIC_MODEL") or cfg["anthropic"]["model"]
-    backend = AnthropicBackend(model=model)
+    if args.ollama is not None:
+        from neurohive.backends import OllamaBackend  # noqa: PLC0415
+        ollama_model = args.ollama or cfg["ollama"]["model"]
+        backend = OllamaBackend(model=ollama_model, host=cfg["ollama"]["host"])
+        model = backend.model_id
+    else:
+        from neurohive.backends import AnthropicBackend  # noqa: PLC0415
+        _check_api_key()
+        model = args.model or os.environ.get("ANTHROPIC_MODEL") or cfg["anthropic"]["model"]
+        backend = AnthropicBackend(model=model)
 
     node_top_k          = args.node_top_k          if args.node_top_k          is not None else cfg["pipeline"]["node_top_k"]
     chunk_top_k         = args.chunk_top_k         if args.chunk_top_k         is not None else cfg["pipeline"]["chunk_top_k"]
@@ -317,6 +337,7 @@ def main() -> None:
         "node_top_k":           node_top_k,
         "chunk_top_k":          chunk_top_k,
         "confidence_threshold": confidence_threshold,
+        "generation_backend":   "ollama" if args.ollama is not None else "anthropic",
         "verify_entailment":    args.verify,
         "entailment_threshold": args.entailment_threshold,
     } if args.log else None
