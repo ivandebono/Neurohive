@@ -110,6 +110,7 @@ class IncrementalIngestor:
         if config is None:
             from neurohive.config import load_config  # noqa: PLC0415
             config = load_config()
+        self._config = config
         self._cache_files: tuple[str, ...] = _cache_files_from_config(config)
 
     # ------------------------------------------------------------------
@@ -132,6 +133,67 @@ class IncrementalIngestor:
         self._kb._edges_cache = None
         self._kb._chunks_cache = None
         return deleted
+
+    def _semantic_dedup(
+        self,
+        chunks: list[PaperChunk],
+        threshold: float,
+    ) -> list[PaperChunk]:
+        """
+        Remove near-duplicate chunks using cosine similarity of embeddings.
+
+        Compares each candidate against the existing corpus embeddings AND
+        against previously accepted candidates in this batch. Requires the
+        embedding model and ``chunk_embs.npy`` to be present; silently skips
+        if either is missing or sentence-transformers is not installed.
+        """
+        try:
+            import numpy as np                                # noqa: PLC0415
+            from sentence_transformers import SentenceTransformer  # noqa: PLC0415
+        except ImportError:
+            return chunks
+
+        cfg = self._config
+        repo_root = Path(__file__).parent.parent
+        models_dir = Path(cfg["paths"]["models_dir"])
+        if not models_dir.is_absolute():
+            models_dir = repo_root / models_dir
+        model_name = cfg["embeddings"]["model"].split("/")[-1]
+        model_path = models_dir / model_name
+        emb_file   = self._cache_dir / cfg["retrieval"]["chunk_emb_file"]
+
+        if not model_path.exists() or not emb_file.exists():
+            return chunks
+
+        existing_embs = np.load(str(emb_file))  # (N, D), L2-normalised
+        model = SentenceTransformer(str(model_path))
+        new_embs = model.encode(
+            [c.text for c in chunks], normalize_embeddings=True
+        )  # (M, D)
+
+        accepted: list[PaperChunk] = []
+        # Build a comparison matrix that grows as we accept new chunks.
+        comparison = list(existing_embs)
+
+        for i, chunk in enumerate(chunks):
+            if comparison:
+                sims = np.array(comparison) @ new_embs[i]
+                max_sim = float(sims.max())
+            else:
+                max_sim = 0.0
+
+            if max_sim >= threshold:
+                msg = (
+                    f"Semantic duplicate skipped: doi={chunk.doi!r} "
+                    f"index={chunk.chunk_index} "
+                    f"(max cosine similarity {max_sim:.3f} ≥ {threshold})"
+                )
+                warnings.warn(msg, stacklevel=3)
+            else:
+                accepted.append(chunk)
+                comparison.append(new_embs[i])
+
+        return accepted
 
     def _record_batch(self, batch_id: str, source: str, result: IngestResult) -> None:
         if not result.any_added:
@@ -173,6 +235,15 @@ class IncrementalIngestor:
             else:
                 existing.add(key)
                 to_insert.append(chunk)
+
+        # Semantic deduplication (requires embedding model + existing embeddings).
+        icfg = self._config.get("ingestor", {})
+        if to_insert and icfg.get("semantic_dedup_enabled", True):
+            before = len(to_insert)
+            to_insert = self._semantic_dedup(
+                to_insert, float(icfg.get("semantic_dedup_threshold", 0.92))
+            )
+            result.skipped_chunks += before - len(to_insert)
 
         if to_insert:
             max_id: int = self._conn.execute("SELECT COALESCE(MAX(id),0) FROM chunks").fetchone()[0]
