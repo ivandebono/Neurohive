@@ -49,6 +49,15 @@ _DEFAULTS: dict = {
         "node_emb_file":      "node_embs.npy",
         "chunk_emb_file":     "chunk_embs.npy",
     },
+    "drift": {
+        "baseline_file":          "drift_baseline.json",
+        "vocab_warning_threshold": 0.05,
+        "vocab_alert_threshold":   0.15,
+        "volume_warning_pct":      0.20,
+        "volume_alert_pct":        0.50,
+        "embedding_warning_dist":  0.10,
+        "embedding_alert_dist":    0.25,
+    },
     # API model names are intentionally absent from these defaults.
     # config.toml is the single source of truth for Anthropic model identifiers.
     "anthropic":  {},
@@ -81,7 +90,8 @@ def load_config(path: Path | str | None = None) -> dict:
 
     # Deep-merge: defaults provide the base; file values override section-by-section.
     merged: dict = {}
-    for section, defaults in _DEFAULTS.items():
-        merged[section] = {**defaults, **raw.get(section, {})}
+    all_sections = set(_DEFAULTS) | set(raw)
+    for section in all_sections:
+        merged[section] = {**_DEFAULTS.get(section, {}), **raw.get(section, {})}
 
     return merged
