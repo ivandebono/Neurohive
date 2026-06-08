@@ -79,6 +79,8 @@ def _check_api_key() -> None:
 
 
 def _print_result(result, show_sources: bool = False) -> None:
+    if result.cached:
+        print("[cached]")
     print(result)
     if show_sources:
         print("TAXONOMY NODES RETRIEVED")
@@ -261,6 +263,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--rerank", action="store_true",
+        help=(
+            "Re-rank retrieved chunks with the cross-encoder before generation. "
+            "Retrieves pool_multiplier × chunk_top_k candidates then keeps the "
+            "top chunk_top_k by entailment score. "
+            "Requires: make setup-nli && make download-nli-model."
+        ),
+    )
+    parser.add_argument(
+        "--no-cache", action="store_true",
+        help="Disable the query result cache for this run.",
+    )
+    parser.add_argument(
         "--debug", action="store_true",
         help="Print the raw model output (triples before verification) for each query.",
     )
@@ -386,9 +401,11 @@ def main() -> None:
         chunk_top_k=chunk_top_k,
         confidence_threshold=confidence_threshold,
         verify_entailment=args.verify,
+        rerank=args.rerank,
         nli_model_dir=nli_model_dir,
         entailment_threshold=args.entailment_threshold,
         model_dir=embeddings_model_dir,
+        cache_enabled=False if args.no_cache else None,
     )
 
     log_path = (logs_dir / f"{datetime.date.today().isoformat()}.jsonl") if args.log else None

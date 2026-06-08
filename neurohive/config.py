@@ -49,6 +49,19 @@ _DEFAULTS: dict = {
         "node_emb_file":      "node_embs.npy",
         "chunk_emb_file":     "chunk_embs.npy",
     },
+    "cache": {
+        "enabled":     False,
+        "ttl_seconds": 86400,
+        "db_file":     "query_cache.db",
+    },
+    "reranker": {
+        "enabled":         False,
+        "pool_multiplier": 3,
+    },
+    "ingestor": {
+        "semantic_dedup_enabled":   True,
+        "semantic_dedup_threshold": 0.92,
+    },
     "drift": {
         "baseline_file":          "drift_baseline.json",
         "vocab_warning_threshold": 0.05,
@@ -94,4 +107,20 @@ def load_config(path: Path | str | None = None) -> dict:
     for section in all_sections:
         merged[section] = {**_DEFAULTS.get(section, {}), **raw.get(section, {})}
 
+    _validate(merged)
     return merged
+
+
+def _validate(cfg: dict) -> None:
+    """Validate the merged config dict via Pydantic; raise ValueError on bad values."""
+    from neurohive.schema import NeurohiveConfig  # noqa: PLC0415
+    from pydantic import ValidationError          # noqa: PLC0415
+    try:
+        NeurohiveConfig.model_validate(cfg)
+    except ValidationError as exc:
+        # Reformat Pydantic's error into a concise, actionable message.
+        problems = "; ".join(
+            f"{'.'.join(str(l) for l in e['loc'])}: {e['msg']}"
+            for e in exc.errors()
+        )
+        raise ValueError(f"config.toml validation failed — {problems}") from exc

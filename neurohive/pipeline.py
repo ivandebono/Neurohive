@@ -57,6 +57,7 @@ class QueryResult:
     citation_meta: dict[str, tuple[str, str, str]]
     # raw verified triples produced by the LLM, for downstream use
     answer_triples: list[dict]
+    cached: bool = False
 
     def as_dict(self) -> dict:
         """Return the primary output fields as a plain dict."""
@@ -130,9 +131,11 @@ class QueryPipeline:
         chunk_top_k: int | None = None,
         confidence_threshold: float | None = None,
         verify_entailment: bool = False,
+        rerank: bool = False,
         nli_model_dir: Path | str | None = None,
         entailment_threshold: float | None = None,
         model_dir: Path | str | None = None,
+        cache_enabled: bool | None = None,
     ):
         from neurohive.config import load_config  # noqa: PLC0415
         cfg = load_config()
@@ -153,11 +156,27 @@ class QueryPipeline:
         self.kb = KnowledgeBase(resolved_data_dir)
         self.retriever = Retriever(self.kb, model_dir=model_dir, cache_dir=self.kb.cache_dir)
 
-        # NLI cross-encoder for optional post-generation entailment checking
+        # NLI cross-encoder: shared between re-ranking and entailment checking.
         self._nli_model = None
         self._nli_threshold: float = 0.5
-        if verify_entailment:
+        if verify_entailment or rerank:
             self._load_nli_model(nli_model_dir, entailment_threshold)
+
+        self._verify_entailment = verify_entailment
+        self._rerank = rerank and self._nli_model is not None
+        self._rerank_pool = int(cfg["reranker"]["pool_multiplier"])
+
+        # Query result cache
+        cache_cfg = cfg.get("cache", {})
+        _cache_on = cache_enabled if cache_enabled is not None else bool(cache_cfg.get("enabled", False))
+        if _cache_on:
+            from neurohive.cache import QueryCache  # noqa: PLC0415
+            cache_db = resolved_data_dir / "database" / str(cache_cfg.get("db_file", "query_cache.db"))
+            self._cache: QueryCache | None = QueryCache(
+                cache_db, ttl_seconds=int(cache_cfg.get("ttl_seconds", 86400))
+            )
+        else:
+            self._cache = None
 
     @property
     def retrieval_mode(self) -> str:
@@ -220,14 +239,37 @@ class QueryPipeline:
         self._nli_model = CrossEncoder(str(model_path), num_labels=3)
 
     # ------------------------------------------------------------------
+    # Re-ranking
+    # ------------------------------------------------------------------
+
+    def _rerank_chunks(
+        self, query: str, chunks: list[PaperChunk], keep: int
+    ) -> list[PaperChunk]:
+        """
+        Score (query, chunk.text) pairs with the cross-encoder and return the
+        top-``keep`` chunks by entailment probability (column 1 of the 3-class
+        NLI output: contradiction=0, entailment=1, neutral=2).
+        """
+        if not chunks or len(chunks) <= keep:
+            return chunks
+        import numpy as np  # noqa: PLC0415
+        pairs = [(query, c.text) for c in chunks]
+        scores = np.atleast_2d(self._nli_model.predict(pairs, apply_softmax=True))
+        entailment_scores = scores[:, 1].tolist()
+        ranked = sorted(zip(entailment_scores, chunks), reverse=True)
+        return [c for _, c in ranked[:keep]]
+
+    # ------------------------------------------------------------------
     # Step 1 + 2: retrieve & expand
     # ------------------------------------------------------------------
 
     def _retrieve_and_expand(self, query: str) -> tuple[list[Node], list[PaperChunk]]:
+        # Fetch a larger candidate pool when re-ranking is enabled.
+        chunk_fetch_k = self.chunk_top_k * self._rerank_pool if self._rerank else self.chunk_top_k
         top_nodes_scored, top_chunks_scored = self.retriever.retrieve(
             query,
             self.node_top_k,
-            self.chunk_top_k,
+            chunk_fetch_k,
         )
 
         seed_ids = {n.id for n, _ in top_nodes_scored}
@@ -243,6 +285,9 @@ class QueryPipeline:
         bm25_chunks = {c.id: c for c, _ in top_chunks_scored}
         node_chunks = {c.id: c for c in self.kb.chunks_for_nodes(expanded_ids)}
         all_chunks = list({**node_chunks, **bm25_chunks}.values())
+
+        if self._rerank:
+            all_chunks = self._rerank_chunks(query, all_chunks, self.chunk_top_k)
 
         return all_nodes, all_chunks
 
@@ -515,8 +560,46 @@ class QueryPipeline:
     # Public API
     # ------------------------------------------------------------------
 
+    def _corpus_fingerprint(self) -> str:
+        from neurohive.cache import QueryCache  # noqa: PLC0415
+        conn = self.kb._conn
+        n_nodes  = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
+        n_edges  = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+        n_chunks = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+        return QueryCache.corpus_fingerprint(n_nodes, n_edges, n_chunks)
+
     def run(self, query: str, debug: bool = False) -> QueryResult:
         """Run the full pipeline and return a QueryResult."""
+        # ── Cache lookup ───────────────────────────────────────────────
+        cache_key: str | None = None
+        if self._cache is not None:
+            from neurohive.cache import QueryCache  # noqa: PLC0415
+            cache_key = QueryCache.make_key(
+                query,
+                self._backend.model_id,
+                self.node_top_k,
+                self.chunk_top_k,
+                self.confidence_threshold,
+                self._rerank,
+                self._corpus_fingerprint(),
+            )
+            hit = self._cache.get(cache_key)
+            if hit is not None:
+                return QueryResult(
+                    query=query,
+                    answer=hit["answer"],
+                    citation=hit["citation"],
+                    document=hit["document"],
+                    nodes_used=[],
+                    chunks_used=[],
+                    model=hit["model"],
+                    retrieval_mode=hit["retrieval_mode"],
+                    citation_meta={k: tuple(v) for k, v in hit["citation_meta"].items()},
+                    answer_triples=hit["answer_triples"],
+                    cached=True,
+                )
+
+        # ── Full pipeline ──────────────────────────────────────────────
         nodes, chunks = self._retrieve_and_expand(query)
         structured = self._generate(query, nodes, chunks)
 
@@ -530,7 +613,8 @@ class QueryPipeline:
                     print(f"[debug]   [{i}] {t}")
 
         verified = self._verify(structured, nodes, chunks)
-        self._entailment_check(verified["answer_triples"], chunks)
+        if self._verify_entailment:
+            self._entailment_check(verified["answer_triples"], chunks)
 
         norm_to_meta: dict[str, tuple[str, str, str]] = {}
         for c in chunks:
@@ -542,7 +626,7 @@ class QueryPipeline:
             if meta:
                 citation_meta[cite] = meta
 
-        return QueryResult(
+        result = QueryResult(
             query=query,
             answer=self._assemble_answer(verified["answer_triples"]),
             citation=verified["citation"],
@@ -554,3 +638,19 @@ class QueryPipeline:
             citation_meta=citation_meta,
             answer_triples=verified["answer_triples"],
         )
+
+        if self._cache is not None and cache_key is not None:
+            self._cache.put(
+                cache_key, query, self._backend.model_id,
+                {
+                    "answer":        result.answer,
+                    "citation":      result.citation,
+                    "document":      result.document,
+                    "answer_triples": result.answer_triples,
+                    "citation_meta": {k: list(v) for k, v in citation_meta.items()},
+                    "model":         result.model,
+                    "retrieval_mode": result.retrieval_mode,
+                },
+            )
+
+        return result

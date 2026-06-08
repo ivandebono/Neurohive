@@ -68,6 +68,29 @@ host = "http://localhost:11434"
 # script reads this value automatically.
 model = "sentence-transformers/all-MiniLM-L6-v2"
 
+[cache]
+# SQLite-backed query result cache. Set enabled = true to avoid redundant
+# LLM calls for repeated queries. The cache key covers query text, model,
+# top-k settings, and a corpus fingerprint — adding new data auto-invalidates.
+enabled     = false
+ttl_seconds = 86400      # 24 hours; 0 = no TTL
+db_file     = "query_cache.db"
+
+[reranker]
+# Cross-encoder re-ranking of retrieved chunks before generation.
+# Requires the NLI model: make setup-nli && make download-nli-model.
+# Retrieve pool_multiplier * chunk_top_k candidates, then re-rank to chunk_top_k.
+enabled         = false
+pool_multiplier = 3
+
+[ingestor]
+# Semantic deduplication during incremental ingestion.
+# Requires the embedding model: make setup-embeddings && scripts/download_model.py.
+# Chunks whose cosine similarity to any existing chunk exceeds the threshold
+# are skipped, even if their (doi, chunk_index) key is new.
+semantic_dedup_enabled   = true
+semantic_dedup_threshold = 0.92
+
 [drift]
 # Baseline snapshot is written to data/database/ by default.
 baseline_file = "drift_baseline.json"
