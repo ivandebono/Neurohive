@@ -4,6 +4,8 @@
 
 A retrieval-augmented generation (RAG) pipeline that takes a natural language question and returns a structured, evidence-grounded answer drawn exclusively from the curated neuroscience knowledge store. Every factual claim is traceable to a specific taxonomy concept or peer-reviewed paper excerpt — sources that do not appear in the retrieved context are stripped before the response is returned.
 
+The knowledge store is a live SQLite database. New papers, taxonomy nodes, and edges can be added incrementally without a full rebuild. A built-in drift detector monitors the corpus for distribution shift and raises warnings when the data departs significantly from a saved baseline.
+
 ---
 
 ## My Approach
@@ -43,9 +45,11 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 ### Design Choices
 
 - **No external retrieval library**: BM25 is implemented directly with standard-library Python. It precomputes document lengths, IDF values, and inverted postings, then persists those indices during ingestion.
+- **Dynamic knowledge base**: the SQLite store supports incremental ingestion — new chunks, nodes, and edges can be added at runtime without a full rebuild. Each ingestion batch is recorded in a `batches` provenance table with a timestamp and source. Cache filenames for BM25 and embedding indices are read from `config.toml [retrieval]`, not hardcoded.
+- **Data drift detection**: a `DriftDetector` snapshots five corpus metrics (volume, vocabulary JS divergence, type distributions, paper year distribution, embedding centroid distance) and compares them against a saved baseline. Thresholds are configurable under `config.toml [drift]`.
 - **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings`. The default works without it.
 - **Generation backend choice**: use Anthropic for stronger API-hosted generation, or pass `--ollama` to use a local open-source model through Ollama. The default Ollama model is `ministral-3:3b`.
-- **Configuration in one place**: `config.toml` is the source for model names, runtime paths, retrieval tuning, and cache artifact names. Query-level settings can also be overridden per query via CLI flags.
+- **Configuration in one place**: `config.toml` is the source for model names, runtime paths, retrieval tuning, cache artifact names, and drift detection thresholds. Query-level settings can also be overridden per query via CLI flags.
 - **SQLite-backed knowledge store**: raw source files live in the configured data directory; the pipeline auto-builds the SQLite database on first run using the stdlib `sqlite3` module. No additional database dependency required.
 
 
@@ -182,12 +186,12 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 ```
 
-**Local Ollama** avoids paid API calls and uses the configured open-source model (`llama3.2:3b` by default):
+**Local Ollama** avoids paid API calls and uses the configured open-source model (`ministral-3:3b` by default):
 
 ```bash
 git clone <repo-url>
 cd neurohive
-make setup-ollama              # installs Python deps and runs: ollama pull llama3.2:3b
+make setup-ollama              # installs Python deps and pulls the configured Ollama model
 uv run python main.py --ingest # build database + retrieval caches
 ```
 
@@ -285,6 +289,114 @@ uv run python main.py --model claude-sonnet-4-6 --entailment-threshold 0.6 --ver
 
 To change permanent defaults, retrieval tuning, cache filenames, or runtime paths, edit `config.toml`.
 
+### Incremental ingestion (dynamic database)
+
+Add new paper chunks or taxonomy nodes to the live database without a full rebuild. After insertion the retrieval caches are invalidated; run `--ingest` to rebuild them:
+
+```bash
+# Add paper chunks from a JSON file (same schema as data/raw/paper_chunks.json)
+uv run python main.py --add path/to/new_papers.json
+
+# Add taxonomy nodes from a CSV file (same schema as data/raw/taxonomy_nodes.csv)
+uv run python main.py --add path/to/new_nodes.csv
+
+# Rebuild retrieval indices after ingestion
+uv run python main.py --ingest
+```
+
+From Python:
+
+```python
+from neurohive.knowledge_base import KnowledgeBase
+from neurohive.ingestor import IncrementalIngestor
+from neurohive.entities import PaperChunk
+
+kb = KnowledgeBase("data")
+ingestor = IncrementalIngestor(kb)
+
+chunks = PaperChunk.load_all("new_papers.json")
+result = ingestor.add_chunks(chunks, source="new_papers.json")
+print(result)
+# Batch: batch_20260608T130000Z
+#   Chunks: +12 added, 0 skipped
+#   Cache:  invalidated — run 'python main.py --ingest' to rebuild indices
+
+# List all recorded ingestion batches
+for batch in ingestor.list_batches():
+    print(batch)
+```
+
+Duplicate detection uses natural keys: `(doi, chunk_index)` for chunks, `id` for nodes, and `(from_id, to_id, relationship_type)` for edges. Duplicates are skipped with a warning.
+
+### Data drift detection
+
+Save a baseline snapshot of the corpus, then check for drift after adding new data:
+
+```bash
+# Step 1: save the current state as a baseline
+uv run python main.py --snapshot-drift
+
+# Step 2: add new data and rebuild indices
+uv run python main.py --add new_papers.json
+uv run python main.py --ingest
+
+# Step 3: check for drift against the baseline
+uv run python main.py --check-drift
+```
+
+Example output:
+
+```
+Drift status: WARNING  ⚠
+  Baseline : 2026-06-01T09:00:00+00:00
+  Current  : 2026-06-08T14:30:00+00:00
+
+Findings:
+  WARNING: chunks count changed by +18.1% (83 → 98)
+  WARNING: vocabulary distribution shifted (JS=0.0712 ≥ 0.05)
+
+Volume changes:
+  nodes            92 →     92  (+0.0%)
+  edges           130 →    130  (+0.0%)
+  chunks           83 →     98  (+18.1%)
+  papers           24 →     29  (+20.8%)
+
+Vocabulary Jensen-Shannon divergence : 0.0712
+```
+
+From Python:
+
+```python
+from neurohive.knowledge_base import KnowledgeBase
+from neurohive.drift import DriftDetector
+
+kb = KnowledgeBase("data")
+detector = DriftDetector(kb, cache_dir=kb.cache_dir)
+
+# Save current state as baseline (once, after initial ingestion)
+detector.save_baseline()
+
+# Later, after adding new data:
+report = detector.check()
+print(report)
+
+if report.status == "alert":
+    # Investigate, then accept the new distribution as the next baseline
+    detector.save_baseline()
+```
+
+Drift is detected across five metrics:
+
+| Metric | Method | Default thresholds |
+|---|---|---|
+| Volume | % change in node / edge / chunk / paper counts | 20% → warning, 50% → alert |
+| Vocabulary | Jensen-Shannon divergence over token distributions | 0.05 → warning, 0.15 → alert |
+| Type structure | New node or edge types | any → warning |
+| Paper recency | Median publication year shift | ≥ 5 years → warning |
+| Embedding centroid | Cosine distance between corpus means | 0.10 → warning, 0.25 → alert |
+
+All thresholds are configurable in `config.toml [drift]`. Run `scripts/demo_drift.py` for a complete end-to-end walkthrough.
+
 ### All CLI flags
 
 | Flag | Default | Description |
@@ -302,6 +414,9 @@ To change permanent defaults, retrieval tuning, cache filenames, or runtime path
 | `--debug` | off | Print raw model triples before verification |
 | `--log` | off | Append a JSONL record for each query to `[paths] logs_dir/YYYY-MM-DD.jsonl` |
 | `--ingest` | — | Build (or rebuild) the database and retrieval caches, then exit |
+| `--add FILE` | — | Incrementally add chunks (`.json`) or nodes (`.csv`) to the live database, then exit |
+| `--snapshot-drift` | — | Save the current corpus state as the drift baseline, then exit |
+| `--check-drift` | — | Compare the current corpus against the saved baseline and print a report, then exit |
 
 ### Python API
 
@@ -358,6 +473,7 @@ chunk_rrf_k = 60
 
 sibling_discount = 0.5
 
+# Cache filenames — read by IncrementalIngestor to know which files to invalidate.
 bm25_cache_version = 1
 bm25_meta_file     = "bm25_meta.json"
 node_bm25_file     = "node_bm25.json"
@@ -366,11 +482,20 @@ emb_meta_file      = "emb_meta.json"
 node_emb_file      = "node_embs.npy"
 chunk_emb_file     = "chunk_embs.npy"
 
+[drift]
+baseline_file           = "drift_baseline.json"
+vocab_warning_threshold = 0.05
+vocab_alert_threshold   = 0.15
+volume_warning_pct      = 0.20
+volume_alert_pct        = 0.50
+embedding_warning_dist  = 0.10
+embedding_alert_dist    = 0.25
+
 [anthropic]
 model = "claude-haiku-4-5-20251001"
 
 [ollama]
-model = "llama3.2:3b"
+model = "ministral-3:3b-instruct-2512-q4_K_M"
 host  = "http://localhost:11434"
 
 [embeddings]
@@ -401,26 +526,30 @@ neurohive/
 │   │   ├── paper_chunks.json      83 excerpts from 24 peer-reviewed papers
 │   │   └── README.md              Data schema reference
 │   └── database/
-│       ├── neurohive.db           SQLite database (auto-generated from raw/, gitignored)
+│       ├── neurohive.db           SQLite database (auto-generated; gitignored)
 │       ├── bm25_meta.json         BM25 cache metadata (generated by --ingest)
 │       ├── node_bm25.json         Taxonomy BM25 index cache
 │       ├── chunk_bm25.json        Paper chunk BM25 index cache
-│       ├── emb_meta.json          Embedding cache metadata, when hybrid retrieval is enabled
+│       ├── emb_meta.json          Embedding cache metadata (hybrid retrieval only)
 │       ├── node_embs.npy          Taxonomy dense embeddings
-│       └── chunk_embs.npy         Paper chunk dense embeddings
+│       ├── chunk_embs.npy         Paper chunk dense embeddings
+│       └── drift_baseline.json    Drift baseline snapshot (generated by --snapshot-drift)
 │
 ├── neurohive/
 │   ├── entities/
 │   │   ├── node.py                Node dataclass
 │   │   ├── edge.py                Edge dataclass
 │   │   └── paper_chunk.py         PaperChunk dataclass
-│   ├── knowledge_base.py          SQLite-backed store; graph expansion and lookups
+│   ├── knowledge_base.py          SQLite-backed store; schema migration; graph expansion
+│   ├── ingestor.py                IncrementalIngestor: add chunks/nodes/edges at runtime
+│   ├── drift.py                   DriftDetector: snapshot and compare corpus statistics
 │   ├── retrieval.py               BM25 Okapi + optional hybrid RRF retriever
 │   ├── backends.py                AnthropicBackend and OllamaBackend
 │   ├── pipeline.py                QueryPipeline: end-to-end orchestration + _verify()
 │   └── config.py                  Config loader (reads config.toml)
 │
 ├── scripts/
+│   ├── demo_drift.py              End-to-end walkthrough: ingest → baseline → drift check
 │   ├── setup_ollama_model.py      Pulls the configured local Ollama model
 │   ├── download_model.py          Downloads the configured embedding model
 │   └── download_nli_model.py      Downloads the configured NLI cross-encoder model

@@ -33,7 +33,9 @@ CREATE TABLE IF NOT EXISTS nodes (
     name        TEXT NOT NULL,
     type        TEXT NOT NULL,
     description TEXT NOT NULL,
-    source      TEXT NOT NULL DEFAULT ''
+    source      TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    batch_id    TEXT NOT NULL DEFAULT 'initial'
 );
 CREATE TABLE IF NOT EXISTS edges (
     id                INTEGER PRIMARY KEY,
@@ -42,7 +44,9 @@ CREATE TABLE IF NOT EXISTS edges (
     relationship_type TEXT NOT NULL,
     confidence        REAL NOT NULL,
     map_source        TEXT NOT NULL,
-    notes             TEXT NOT NULL DEFAULT ''
+    notes             TEXT NOT NULL DEFAULT '',
+    created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    batch_id          TEXT NOT NULL DEFAULT 'initial'
 );
 CREATE INDEX IF NOT EXISTS idx_edges_from ON edges(from_id);
 CREATE INDEX IF NOT EXISTS idx_edges_to   ON edges(to_id);
@@ -53,7 +57,9 @@ CREATE TABLE IF NOT EXISTS chunks (
     authors     TEXT NOT NULL,
     year        INTEGER NOT NULL,
     chunk_index INTEGER NOT NULL,
-    text        TEXT NOT NULL
+    text        TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    batch_id    TEXT NOT NULL DEFAULT 'initial'
 );
 CREATE TABLE IF NOT EXISTS chunk_nodes (
     chunk_id INTEGER NOT NULL,
@@ -61,6 +67,14 @@ CREATE TABLE IF NOT EXISTS chunk_nodes (
     PRIMARY KEY (chunk_id, node_id)
 );
 CREATE INDEX IF NOT EXISTS idx_chunk_nodes_node ON chunk_nodes(node_id);
+CREATE TABLE IF NOT EXISTS batches (
+    batch_id   TEXT    PRIMARY KEY,
+    created_at TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    source     TEXT    NOT NULL DEFAULT '',
+    n_nodes    INTEGER NOT NULL DEFAULT 0,
+    n_edges    INTEGER NOT NULL DEFAULT 0,
+    n_chunks   INTEGER NOT NULL DEFAULT 0
+);
 """
 
 
@@ -96,6 +110,7 @@ class KnowledgeBase:
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
+        self._migrate()
 
         if self._conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0] == 0:
             self._ingest(verbose=verbose)
@@ -109,6 +124,32 @@ class KnowledgeBase:
         self.nodes_by_id = _NodeIndex(self)
         self.outgoing    = _EdgeIndex(self._conn, self._to_edge, "from_id")
         self.incoming    = _EdgeIndex(self._conn, self._to_edge, "to_id")
+
+    # ------------------------------------------------------------------
+    # Migration (adds columns to existing databases)
+    # ------------------------------------------------------------------
+
+    def _migrate(self) -> None:
+        """Add new columns and tables to pre-existing databases if absent.
+
+        SQLite's ALTER TABLE ADD COLUMN does not allow CURRENT_TIMESTAMP as a
+        default, so existing rows receive a sentinel value ('initial' / empty
+        string) rather than the actual insertion timestamp.
+        """
+        new_cols = [
+            ("nodes",  "created_at", "TEXT NOT NULL DEFAULT ''"),
+            ("nodes",  "batch_id",   "TEXT NOT NULL DEFAULT 'initial'"),
+            ("edges",  "created_at", "TEXT NOT NULL DEFAULT ''"),
+            ("edges",  "batch_id",   "TEXT NOT NULL DEFAULT 'initial'"),
+            ("chunks", "created_at", "TEXT NOT NULL DEFAULT ''"),
+            ("chunks", "batch_id",   "TEXT NOT NULL DEFAULT 'initial'"),
+        ]
+        for table, col, defn in new_cols:
+            try:
+                self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {defn}")
+                self._conn.commit()
+            except Exception:
+                pass  # Column already exists — SQLite raises OperationalError
 
     # ------------------------------------------------------------------
     # Ingestion

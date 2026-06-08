@@ -68,6 +68,25 @@ host = "http://localhost:11434"
 # script reads this value automatically.
 model = "sentence-transformers/all-MiniLM-L6-v2"
 
+[drift]
+# Baseline snapshot is written to data/database/ by default.
+baseline_file = "drift_baseline.json"
+
+# Jensen-Shannon divergence thresholds for vocabulary distribution drift.
+# Range 0–1. Higher values = more permissive.
+vocab_warning_threshold = 0.05
+vocab_alert_threshold   = 0.15
+
+# Fractional change in record count (nodes / edges / chunks / papers) that
+# triggers a warning or alert. E.g. 0.20 = 20% growth or shrinkage.
+volume_warning_pct = 0.20
+volume_alert_pct   = 0.50
+
+# Cosine distance between current and baseline embedding centroids.
+# Only evaluated when dense embeddings have been built (make setup-embeddings).
+embedding_warning_dist = 0.10
+embedding_alert_dist   = 0.25
+
 [nli]
 # Cross-encoder model for post-generation entailment verification.
 # For each cited claim in the answer, the model checks whether the claim is

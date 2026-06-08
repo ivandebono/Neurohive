@@ -278,6 +278,22 @@ def main() -> None:
             "and exit.  Run this after adding or editing files in data/raw/."
         ),
     )
+    parser.add_argument(
+        "--add", metavar="FILE",
+        help=(
+            "Incrementally add records from FILE to the live database and exit. "
+            "Accepts: *.json (paper chunks) or *.csv (taxonomy nodes). "
+            "Duplicate records are skipped; retrieval caches are invalidated."
+        ),
+    )
+    parser.add_argument(
+        "--snapshot-drift", action="store_true",
+        help="Save the current corpus state as the drift baseline and exit.",
+    )
+    parser.add_argument(
+        "--check-drift", action="store_true",
+        help="Compare the current corpus against the saved baseline and exit.",
+    )
     args = parser.parse_args()
 
     from neurohive.knowledge_base import KnowledgeBase  # noqa: PLC0415
@@ -297,6 +313,50 @@ def main() -> None:
             print(f"Embeddings cached to {kb.cache_dir}/")
         else:
             print("Embeddings skipped (no embedding model - run `make setup-embeddings` for hybrid retrieval)")
+        return
+
+    if args.add:
+        from neurohive.ingestor import IncrementalIngestor  # noqa: PLC0415
+        kb = KnowledgeBase(data_dir)
+        ingestor = IncrementalIngestor(kb, config=cfg)
+        result = ingestor.add_from_file(args.add)
+        print(result)
+        if result.cache_invalidated:
+            print("\nRun 'python main.py --ingest' to rebuild retrieval indices.")
+        return
+
+    if args.snapshot_drift:
+        from neurohive.drift import DriftDetector  # noqa: PLC0415
+        kb = KnowledgeBase(data_dir)
+        dcfg = cfg.get("drift", {})
+        baseline_path = data_dir / "database" / dcfg.get("baseline_file", "drift_baseline.json")
+        detector = DriftDetector(kb, cache_dir=kb.cache_dir, baseline_path=baseline_path)
+        saved = detector.save_baseline()
+        print(f"Drift baseline saved to {saved}")
+        return
+
+    if args.check_drift:
+        from neurohive.drift import DriftDetector  # noqa: PLC0415
+        kb = KnowledgeBase(data_dir)
+        dcfg = cfg.get("drift", {})
+        baseline_path = data_dir / "database" / dcfg.get("baseline_file", "drift_baseline.json")
+        thresholds = {
+            "vocab_warning":  dcfg.get("vocab_warning_threshold", 0.05),
+            "vocab_alert":    dcfg.get("vocab_alert_threshold",   0.15),
+            "volume_warning": dcfg.get("volume_warning_pct",      0.20),
+            "volume_alert":   dcfg.get("volume_alert_pct",        0.50),
+            "emb_warning":    dcfg.get("embedding_warning_dist",  0.10),
+            "emb_alert":      dcfg.get("embedding_alert_dist",    0.25),
+        }
+        detector = DriftDetector(
+            kb, cache_dir=kb.cache_dir,
+            baseline_path=baseline_path, thresholds=thresholds,
+        )
+        if not detector.baseline_exists():
+            print("No baseline found. Run 'python main.py --snapshot-drift' first.")
+            return
+        report = detector.check()
+        print(report)
         return
 
     # Auto-build on first run (database absent) before loading the full pipeline.
