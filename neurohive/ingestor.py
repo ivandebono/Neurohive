@@ -31,19 +31,20 @@ from typing import TYPE_CHECKING
 from neurohive.entities import Edge, Node, PaperChunk
 
 if TYPE_CHECKING:
+    from neurohive.config import Config
     from neurohive.knowledge_base import KnowledgeBase
 
 
-def _cache_files_from_config(config: dict) -> tuple[str, ...]:
-    """Return cache filenames read from the [retrieval] config section."""
-    r = config.get("retrieval", {})
+def _cache_files_from_config(config: Config) -> tuple[str, ...]:
+    """Return cache filenames from the [retrieval] config section."""
+    r = config.retrieval
     return (
-        r.get("bm25_meta_file",  "bm25_meta.json"),
-        r.get("node_bm25_file",  "node_bm25.json"),
-        r.get("chunk_bm25_file", "chunk_bm25.json"),
-        r.get("emb_meta_file",   "emb_meta.json"),
-        r.get("node_emb_file",   "node_embs.npy"),
-        r.get("chunk_emb_file",  "chunk_embs.npy"),
+        r.bm25_meta_file,
+        r.node_bm25_file,
+        r.chunk_bm25_file,
+        r.emb_meta_file,
+        r.node_emb_file,
+        r.chunk_emb_file,
     )
 
 
@@ -102,7 +103,7 @@ class IncrementalIngestor:
         self,
         kb: KnowledgeBase,
         cache_dir: Path | None = None,
-        config: dict | None = None,
+        config: Config | None = None,
     ):
         self._kb = kb
         self._conn: sqlite3.Connection = kb._conn
@@ -110,7 +111,7 @@ class IncrementalIngestor:
         if config is None:
             from neurohive.config import load_config  # noqa: PLC0415
             config = load_config()
-        self._config = config
+        self._config: Config = config
         self._cache_files: tuple[str, ...] = _cache_files_from_config(config)
 
     # ------------------------------------------------------------------
@@ -155,12 +156,12 @@ class IncrementalIngestor:
 
         cfg = self._config
         repo_root = Path(__file__).parent.parent
-        models_dir = Path(cfg["paths"]["models_dir"])
+        models_dir = Path(cfg.paths.models_dir)
         if not models_dir.is_absolute():
             models_dir = repo_root / models_dir
-        model_name = cfg["embeddings"]["model"].split("/")[-1]
+        model_name = cfg.embeddings.model.split("/")[-1]
         model_path = models_dir / model_name
-        emb_file   = self._cache_dir / cfg["retrieval"]["chunk_emb_file"]
+        emb_file   = self._cache_dir / cfg.retrieval.chunk_emb_file
 
         if not model_path.exists() or not emb_file.exists():
             return chunks
@@ -237,12 +238,10 @@ class IncrementalIngestor:
                 to_insert.append(chunk)
 
         # Semantic deduplication (requires embedding model + existing embeddings).
-        icfg = self._config.get("ingestor", {})
-        if to_insert and icfg.get("semantic_dedup_enabled", True):
+        icfg = self._config.ingestor
+        if to_insert and icfg.semantic_dedup_enabled:
             before = len(to_insert)
-            to_insert = self._semantic_dedup(
-                to_insert, float(icfg.get("semantic_dedup_threshold", 0.92))
-            )
+            to_insert = self._semantic_dedup(to_insert, icfg.semantic_dedup_threshold)
             result.skipped_chunks += before - len(to_insert)
 
         if to_insert:

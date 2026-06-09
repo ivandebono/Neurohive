@@ -347,7 +347,7 @@ class KnowledgeBase:
         """
         if confidence_threshold is None:
             from neurohive.config import load_config  # noqa: PLC0415
-            confidence_threshold = float(load_config()["pipeline"]["confidence_threshold"])
+            confidence_threshold = load_config().pipeline.confidence_threshold
 
         expanded = set(node_ids)
         if not node_ids:

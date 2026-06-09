@@ -140,16 +140,16 @@ class QueryPipeline:
         from neurohive.config import load_config  # noqa: PLC0415
         cfg = load_config()
         repo_root = Path(__file__).parent.parent
-        resolved_data_dir = Path(data_dir) if data_dir is not None else Path(cfg["paths"]["data_dir"])
+        resolved_data_dir = Path(data_dir) if data_dir is not None else Path(cfg.paths.data_dir)
         if not resolved_data_dir.is_absolute():
             resolved_data_dir = repo_root / resolved_data_dir
 
-        self.node_top_k = node_top_k if node_top_k is not None else int(cfg["pipeline"]["node_top_k"])
-        self.chunk_top_k = chunk_top_k if chunk_top_k is not None else int(cfg["pipeline"]["chunk_top_k"])
+        self.node_top_k = node_top_k if node_top_k is not None else cfg.pipeline.node_top_k
+        self.chunk_top_k = chunk_top_k if chunk_top_k is not None else cfg.pipeline.chunk_top_k
         self.confidence_threshold = (
             confidence_threshold
             if confidence_threshold is not None
-            else float(cfg["pipeline"]["confidence_threshold"])
+            else cfg.pipeline.confidence_threshold
         )
         self._backend = backend or AnthropicBackend()
 
@@ -158,22 +158,22 @@ class QueryPipeline:
 
         # NLI cross-encoder: shared between re-ranking and entailment checking.
         self._nli_model = None
-        self._nli_threshold: float = 0.5
+        self._nli_threshold: float = cfg.nli.entailment_threshold
         if verify_entailment or rerank:
             self._load_nli_model(nli_model_dir, entailment_threshold)
 
         self._verify_entailment = verify_entailment
         self._rerank = rerank and self._nli_model is not None
-        self._rerank_pool = int(cfg["reranker"]["pool_multiplier"])
+        self._rerank_pool = cfg.reranker.pool_multiplier
 
         # Query result cache
-        cache_cfg = cfg.get("cache", {})
-        _cache_on = cache_enabled if cache_enabled is not None else bool(cache_cfg.get("enabled", False))
+        cache_cfg = cfg.cache
+        _cache_on = cache_enabled if cache_enabled is not None else cache_cfg.enabled
         if _cache_on:
             from neurohive.cache import QueryCache  # noqa: PLC0415
-            cache_db = resolved_data_dir / "database" / str(cache_cfg.get("db_file", "query_cache.db"))
+            cache_db = resolved_data_dir / "database" / cache_cfg.db_file
             self._cache: QueryCache | None = QueryCache(
-                cache_db, ttl_seconds=int(cache_cfg.get("ttl_seconds", 86400))
+                cache_db, ttl_seconds=cache_cfg.ttl_seconds
             )
         else:
             self._cache = None
@@ -207,10 +207,9 @@ class QueryPipeline:
         """
         from neurohive.config import load_config  # noqa: PLC0415
         cfg = load_config()
-        nli_cfg = cfg.get("nli", {})
-        hf_model_id: str = nli_cfg.get("model", "cross-encoder/nli-deberta-v3-small")
-        cfg_threshold = float(nli_cfg.get("entailment_threshold", 0.5))
-        self._nli_threshold = entailment_threshold if entailment_threshold is not None else cfg_threshold
+        nli_cfg = cfg.nli
+        hf_model_id: str = nli_cfg.model
+        self._nli_threshold = entailment_threshold if entailment_threshold is not None else nli_cfg.entailment_threshold
 
         try:
             from sentence_transformers import CrossEncoder  # noqa: PLC0415
@@ -225,7 +224,7 @@ class QueryPipeline:
         else:
             model_name = hf_model_id.split("/")[-1]
             repo_root = Path(__file__).parent.parent
-            models_dir = Path(cfg["paths"]["models_dir"])
+            models_dir = Path(cfg.paths.models_dir)
             if not models_dir.is_absolute():
                 models_dir = repo_root / models_dir
             model_path = models_dir / model_name

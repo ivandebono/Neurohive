@@ -11,13 +11,13 @@ from neurohive.config import load_config
 from neurohive.retrieval import Retriever, _BM25Index
 
 
-def _retrieval_cfg() -> dict:
-    return load_config()["retrieval"]
+def _retrieval_cfg():
+    return load_config().retrieval
 
 
 def _build_bm25(docs: list[str]) -> _BM25Index:
     cfg = _retrieval_cfg()
-    return _BM25Index.build(docs, k1=float(cfg["bm25_k1"]), b=float(cfg["bm25_b"]))
+    return _BM25Index.build(docs, k1=cfg.bm25_k1, b=cfg.bm25_b)
 
 
 class TestBM25Index:
@@ -124,9 +124,9 @@ class TestEmbeddingCache:
         model_dir.mkdir()
         r._save_emb_cache(model_dir)
         cfg = _retrieval_cfg()
-        assert (tmp_path / cfg["node_emb_file"]).exists()
-        assert (tmp_path / cfg["chunk_emb_file"]).exists()
-        assert (tmp_path / cfg["emb_meta_file"]).exists()
+        assert (tmp_path / cfg.node_emb_file).exists()
+        assert (tmp_path / cfg.chunk_emb_file).exists()
+        assert (tmp_path / cfg.emb_meta_file).exists()
 
     def test_meta_records_model_and_corpus_hash(self, kb, tmp_path):
         r = self._make_retriever(kb, tmp_path)
@@ -134,7 +134,7 @@ class TestEmbeddingCache:
         model_dir = tmp_path / "model"
         model_dir.mkdir()
         r._save_emb_cache(model_dir)
-        meta = json.loads((tmp_path / _retrieval_cfg()["emb_meta_file"]).read_text())
+        meta = json.loads((tmp_path / _retrieval_cfg().emb_meta_file).read_text())
         assert meta["model"] == str(model_dir.resolve())
         assert "corpus_hash" in meta
 
@@ -164,7 +164,7 @@ class TestEmbeddingCache:
         model_dir = tmp_path / "model"; model_dir.mkdir()
         r._save_emb_cache(model_dir)
         # Corrupt the corpus hash in the metadata
-        meta_path = tmp_path / _retrieval_cfg()["emb_meta_file"]
+        meta_path = tmp_path / _retrieval_cfg().emb_meta_file
         meta = json.loads(meta_path.read_text())
         meta["corpus_hash"] = "deadbeef"
         meta_path.write_text(json.dumps(meta))
@@ -180,7 +180,7 @@ class TestEmbeddingCache:
         self._fake_embeddings(r)
         model_dir = tmp_path / "model"; model_dir.mkdir()
         r._save_emb_cache(model_dir)   # should silently do nothing
-        assert not (tmp_path / _retrieval_cfg()["node_emb_file"]).exists()
+        assert not (tmp_path / _retrieval_cfg().node_emb_file).exists()
 
     def test_corpus_hash_changes_when_nodes_differ(self, kb, tmp_path):
         r1 = self._make_retriever(kb, tmp_path)
@@ -197,9 +197,9 @@ class TestBM25Cache:
     def test_retriever_writes_bm25_cache_files(self, kb, tmp_path):
         Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
         cfg = _retrieval_cfg()
-        assert (tmp_path / cfg["bm25_meta_file"]).exists()
-        assert (tmp_path / cfg["node_bm25_file"]).exists()
-        assert (tmp_path / cfg["chunk_bm25_file"]).exists()
+        assert (tmp_path / cfg.bm25_meta_file).exists()
+        assert (tmp_path / cfg.node_bm25_file).exists()
+        assert (tmp_path / cfg.chunk_bm25_file).exists()
 
     def test_load_bm25_cache_succeeds(self, kb, tmp_path):
         first = Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
@@ -210,7 +210,7 @@ class TestBM25Cache:
 
     def test_load_bm25_cache_rejects_stale_corpus_hash(self, kb, tmp_path):
         Retriever(kb, model_dir=tmp_path / "nonexistent", cache_dir=tmp_path)
-        meta_path = tmp_path / _retrieval_cfg()["bm25_meta_file"]
+        meta_path = tmp_path / _retrieval_cfg().bm25_meta_file
         meta = json.loads(meta_path.read_text())
         meta["corpus_hash"] = "stale"
         meta_path.write_text(json.dumps(meta))

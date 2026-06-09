@@ -1,7 +1,8 @@
-"""Pydantic models for config.toml validation.
+"""Pydantic models for config.toml validation and attribute access.
 
-These models are used exclusively for validation in ``load_config()``.
-They do not provide defaults — all defaults live in ``config.py:_DEFAULTS``.
+``Config`` is the public type returned by ``load_config()``.
+All sub-config classes are also importable for type annotations.
+All defaults live in ``config.toml`` — these models only validate and expose them.
 Unknown extra keys are silently ignored so future config extensions don't
 break older code.
 """
@@ -30,11 +31,18 @@ class PipelineConfig(_Base):
 
 
 class RetrievalConfig(_Base):
-    bm25_k1:          float = Field(..., gt=0.0)
-    bm25_b:           float = Field(..., ge=0.0, le=1.0)
-    node_rrf_k:       int   = Field(..., gt=0)
-    chunk_rrf_k:      int   = Field(..., gt=0)
-    sibling_discount: float = Field(..., ge=0.0, le=1.0)
+    bm25_k1:            float = Field(..., gt=0.0)
+    bm25_b:             float = Field(..., ge=0.0, le=1.0)
+    node_rrf_k:         int   = Field(..., gt=0)
+    chunk_rrf_k:        int   = Field(..., gt=0)
+    sibling_discount:   float = Field(..., ge=0.0, le=1.0)
+    bm25_cache_version: int   = Field(..., ge=0)
+    bm25_meta_file:     str
+    node_bm25_file:     str
+    chunk_bm25_file:    str
+    emb_meta_file:      str
+    node_emb_file:      str
+    chunk_emb_file:     str
 
 
 class CacheConfig(_Base):
@@ -97,15 +105,16 @@ class NliConfig(_Base):
     entailment_threshold: float = Field(..., ge=0.0, le=1.0)
 
 
-class NeurohiveConfig(_Base):
-    paths:     PathsConfig
-    pipeline:  PipelineConfig
-    retrieval: RetrievalConfig
-    cache:     CacheConfig
-    reranker:  RerankerConfig
-    ingestor:  IngestorConfig
-    drift:     DriftConfig
-    anthropic: AnthropicConfig
-    ollama:    OllamaConfig
+class Config(_Base):
+    """Top-level configuration object returned by ``load_config()``."""
+    paths:      PathsConfig
+    pipeline:   PipelineConfig
+    retrieval:  RetrievalConfig
+    cache:      CacheConfig
+    reranker:   RerankerConfig
+    ingestor:   IngestorConfig
+    drift:      DriftConfig
+    anthropic:  AnthropicConfig
+    ollama:     OllamaConfig
     embeddings: EmbeddingsConfig
-    nli:       NliConfig
+    nli:        NliConfig

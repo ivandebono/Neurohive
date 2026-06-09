@@ -526,11 +526,12 @@ wheels = [
 
 [[package]]
 name = "neurohive"
-version = "0.9.2"
+version = "0.9.3"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "numpy" },
+    { name = "pydantic" },
 ]
 
 [package.optional-dependencies]
@@ -551,6 +552,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.104.1" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "pydantic", specifier = ">=2.0" },
     { name = "sentence-transformers", marker = "extra == 'embeddings'", specifier = ">=3.0.0" },
     { name = "sentence-transformers", marker = "extra == 'nli'", specifier = ">=3.0.0" },
 ]

@@ -176,9 +176,9 @@ def _interactive(
 def main() -> None:
     from neurohive.config import load_config  # noqa: PLC0415
     cfg = load_config()
-    data_dir = _repo_path(cfg["paths"]["data_dir"])
-    env_path = _repo_path(cfg["paths"]["env_file"])
-    logs_dir = _repo_path(cfg["paths"]["logs_dir"])
+    data_dir = _repo_path(cfg.paths.data_dir)
+    env_path = _repo_path(cfg.paths.env_file)
+    logs_dir = _repo_path(cfg.paths.logs_dir)
     db_path = data_dir / "database" / "neurohive.db"
 
     _load_env(env_path)
@@ -314,7 +314,7 @@ def main() -> None:
     from neurohive.knowledge_base import KnowledgeBase  # noqa: PLC0415
 
     # Resolve the embeddings model directory early — needed by both --ingest and normal run.
-    models_root = _repo_path(cfg["paths"]["models_dir"])
+    models_root = _repo_path(cfg.paths.models_dir)
     embeddings_model_dir = (models_root / args.embeddings_model.split("/")[-1]) if args.embeddings_model else None
     nli_model_dir        = (models_root / args.nli_model.split("/")[-1])        if args.nli_model        else None
 
@@ -343,8 +343,7 @@ def main() -> None:
     if args.snapshot_drift:
         from neurohive.drift import DriftDetector  # noqa: PLC0415
         kb = KnowledgeBase(data_dir)
-        dcfg = cfg.get("drift", {})
-        baseline_path = data_dir / "database" / dcfg.get("baseline_file", "drift_baseline.json")
+        baseline_path = data_dir / "database" / cfg.drift.baseline_file
         detector = DriftDetector(kb, cache_dir=kb.cache_dir, baseline_path=baseline_path)
         saved = detector.save_baseline()
         print(f"Drift baseline saved to {saved}")
@@ -353,15 +352,14 @@ def main() -> None:
     if args.check_drift:
         from neurohive.drift import DriftDetector  # noqa: PLC0415
         kb = KnowledgeBase(data_dir)
-        dcfg = cfg.get("drift", {})
-        baseline_path = data_dir / "database" / dcfg.get("baseline_file", "drift_baseline.json")
+        baseline_path = data_dir / "database" / cfg.drift.baseline_file
         thresholds = {
-            "vocab_warning":  dcfg.get("vocab_warning_threshold", 0.05),
-            "vocab_alert":    dcfg.get("vocab_alert_threshold",   0.15),
-            "volume_warning": dcfg.get("volume_warning_pct",      0.20),
-            "volume_alert":   dcfg.get("volume_alert_pct",        0.50),
-            "emb_warning":    dcfg.get("embedding_warning_dist",  0.10),
-            "emb_alert":      dcfg.get("embedding_alert_dist",    0.25),
+            "vocab_warning":  cfg.drift.vocab_warning_threshold,
+            "vocab_alert":    cfg.drift.vocab_alert_threshold,
+            "volume_warning": cfg.drift.volume_warning_pct,
+            "volume_alert":   cfg.drift.volume_alert_pct,
+            "emb_warning":    cfg.drift.embedding_warning_dist,
+            "emb_alert":      cfg.drift.embedding_alert_dist,
         }
         detector = DriftDetector(
             kb, cache_dir=kb.cache_dir,
@@ -380,18 +378,18 @@ def main() -> None:
 
     if args.ollama is not None:
         from neurohive.backends import OllamaBackend  # noqa: PLC0415
-        ollama_model = args.ollama or cfg["ollama"]["model"]
-        backend = OllamaBackend(model=ollama_model, host=cfg["ollama"]["host"])
+        ollama_model = args.ollama or cfg.ollama.model
+        backend = OllamaBackend(model=ollama_model, host=cfg.ollama.host)
         model = backend.model_id
     else:
         from neurohive.backends import AnthropicBackend  # noqa: PLC0415
         _check_api_key()
-        model = args.model or os.environ.get("ANTHROPIC_MODEL") or cfg["anthropic"]["model"]
+        model = args.model or os.environ.get("ANTHROPIC_MODEL") or cfg.anthropic.model
         backend = AnthropicBackend(model=model)
 
-    node_top_k          = args.node_top_k          if args.node_top_k          is not None else cfg["pipeline"]["node_top_k"]
-    chunk_top_k         = args.chunk_top_k         if args.chunk_top_k         is not None else cfg["pipeline"]["chunk_top_k"]
-    confidence_threshold = args.confidence_threshold if args.confidence_threshold is not None else cfg["pipeline"]["confidence_threshold"]
+    node_top_k           = args.node_top_k           if args.node_top_k           is not None else cfg.pipeline.node_top_k
+    chunk_top_k          = args.chunk_top_k          if args.chunk_top_k          is not None else cfg.pipeline.chunk_top_k
+    confidence_threshold = args.confidence_threshold if args.confidence_threshold is not None else cfg.pipeline.confidence_threshold
 
     from neurohive.pipeline import QueryPipeline  # noqa: PLC0415
     pipeline = QueryPipeline(

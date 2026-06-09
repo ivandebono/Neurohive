@@ -49,7 +49,7 @@ The prompt constraint reduces hallucinations but cannot eliminate them. After ge
 - **Data drift detection**: a `DriftDetector` snapshots five corpus metrics (volume, vocabulary JS divergence, type distributions, paper year distribution, embedding centroid distance) and compares them against a saved baseline. Thresholds are configurable under `config.toml [drift]`.
 - **Query result cache**: a SQLite-backed cache stores answers keyed on query text, model, retrieval settings, and a corpus fingerprint. Adding new data changes the fingerprint and automatically invalidates stale entries.
 - **Cross-encoder re-ranking**: the retriever can fetch an oversized candidate pool and re-rank it with an NLI cross-encoder before generation, improving precision at the cost of latency.
-- **Config validation**: `config.toml` is validated at load time against Pydantic v2 models, catching range errors and inconsistent threshold orderings before any query runs.
+- **Config validation and typed access**: `config.toml` is validated at load time via Pydantic v2. `load_config()` returns a typed `Config` object, so every parameter is accessed as an attribute (`cfg.pipeline.node_top_k`, `cfg.anthropic.model`, etc.) with the correct Python type — no dict subscripting or manual casting anywhere in the codebase. Invalid values (e.g. `confidence_threshold` outside 0–1, or `vocab_warning_threshold ≥ vocab_alert_threshold`) raise a `ValueError` before any query runs.
 - **Optional hybrid upgrade**: users who want stronger retrieval can `make setup-embeddings`. The default works without it.
 - **Generation backend choice**: use Anthropic for stronger API-hosted generation, or pass `--ollama` to use a local open-source model through Ollama.
 - **Configuration in one place**: `config.toml` is the source for model names, runtime paths, retrieval tuning, cache settings, and drift detection thresholds. Query-level settings can also be overridden per query via CLI flags.
@@ -337,7 +337,7 @@ uv run python main.py --node-top-k 10 --chunk-top-k 8 --confidence-threshold 0.7
 uv run python main.py --entailment-threshold 0.6 --verify "query..."
 ```
 
-To change permanent defaults, edit `config.toml`. Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml > loader fallback`.
+To change permanent defaults, edit `config.toml`. Resolution order: `CLI flag > ANTHROPIC_MODEL env var > config.toml`.
 
 ### Debug mode
 
@@ -653,7 +653,19 @@ model                = "cross-encoder/nli-deberta-v3-small"
 entailment_threshold = 0.5
 ```
 
-The config is validated at load time using Pydantic. Invalid values (e.g. `confidence_threshold` outside 0–1, or `vocab_warning_threshold ≥ vocab_alert_threshold`) raise a `ValueError` with a clear message before any query runs.
+The config is validated at load time using Pydantic. Invalid values (e.g. `confidence_threshold` outside 0–1, or `vocab_warning_threshold ≥ vocab_alert_threshold`) raise a `ValueError` with a clear message before any query runs. `config.toml` is the **sole source of truth** — no defaults exist anywhere in the Python code.
+
+`load_config()` returns a typed `Config` instance, so parameters are available as attributes:
+
+```python
+from neurohive.config import load_config
+
+cfg = load_config()
+print(cfg.pipeline.node_top_k)          # int
+print(cfg.pipeline.confidence_threshold) # float
+print(cfg.anthropic.model)              # str
+print(cfg.cache.enabled)                # bool
+```
 
 ---
 
@@ -690,11 +702,11 @@ neurohive/
 │   ├── ingestor.py                 IncrementalIngestor: add chunks/nodes/edges at runtime
 │   ├── drift.py                    DriftDetector: snapshot and compare corpus statistics
 │   ├── cache.py                    QueryCache: SQLite-backed query result cache
-│   ├── schema.py                   Pydantic v2 models for config.toml validation
+│   ├── schema.py                   Pydantic v2 Config class + sub-configs; returned by load_config()
 │   ├── retrieval.py                BM25 Okapi + optional hybrid RRF retriever
 │   ├── backends.py                 AnthropicBackend and OllamaBackend
 │   ├── pipeline.py                 QueryPipeline: end-to-end orchestration + _verify()
-│   └── config.py                   Config loader (reads config.toml, validates via schema.py)
+│   └── config.py                   load_config(): reads config.toml and returns a typed Config instance
 │
 ├── scripts/
 │   ├── demo_drift.py               End-to-end walkthrough: ingest → baseline → drift check

@@ -239,7 +239,7 @@ class AnthropicBackend(GenerationBackend):
         import anthropic  # noqa: PLC0415
         if model is None:
             from neurohive.config import load_config  # noqa: PLC0415
-            model = load_config()["anthropic"].get("model")
+            model = load_config().anthropic.model
         if not model:
             raise ValueError(
                 "No Anthropic model specified. Set [anthropic] model in config.toml."
@@ -286,9 +286,9 @@ class OllamaBackend(GenerationBackend):
     def __init__(self, model: str | None = None, host: str | None = None) -> None:
         if model is None or host is None:
             from neurohive.config import load_config  # noqa: PLC0415
-            cfg = load_config()["ollama"]
-            model = model or cfg["model"]
-            host = host or cfg["host"]
+            ollama_cfg = load_config().ollama
+            model = model or ollama_cfg.model
+            host = host or ollama_cfg.host
         self._model = model
         self._host = host.rstrip("/")
 

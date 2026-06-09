@@ -46,14 +46,7 @@ if TYPE_CHECKING:
 
 DriftStatus = Literal["ok", "warning", "alert"]
 
-# ── Default thresholds ──────────────────────────────────────────────────────
-_DEFAULT_VOCAB_WARNING  = 0.05   # Jensen-Shannon divergence
-_DEFAULT_VOCAB_ALERT    = 0.15
-_DEFAULT_VOLUME_WARNING = 0.20   # fractional change
-_DEFAULT_VOLUME_ALERT   = 0.50
-_DEFAULT_EMB_WARNING    = 0.10   # cosine distance
-_DEFAULT_EMB_ALERT      = 0.25
-_VOCAB_TOP_N            = 5_000  # terms kept in snapshot
+_VOCAB_TOP_N = 5_000  # terms kept in snapshot
 
 
 # ── Snapshot ────────────────────────────────────────────────────────────────
@@ -166,15 +159,19 @@ class DriftDetector:
         self._kb = kb
         self._conn: sqlite3.Connection = kb._conn
         self._cache_dir = cache_dir or kb.cache_dir
-        self._baseline_path = baseline_path or (self._cache_dir / "drift_baseline.json")
+
+        from neurohive.config import load_config  # noqa: PLC0415
+        dcfg = load_config().drift
+
+        self._baseline_path = baseline_path or (self._cache_dir / dcfg.baseline_file)
 
         th = thresholds or {}
-        self._vocab_warning  = th.get("vocab_warning",  _DEFAULT_VOCAB_WARNING)
-        self._vocab_alert    = th.get("vocab_alert",    _DEFAULT_VOCAB_ALERT)
-        self._vol_warning    = th.get("volume_warning", _DEFAULT_VOLUME_WARNING)
-        self._vol_alert      = th.get("volume_alert",   _DEFAULT_VOLUME_ALERT)
-        self._emb_warning    = th.get("emb_warning",    _DEFAULT_EMB_WARNING)
-        self._emb_alert      = th.get("emb_alert",      _DEFAULT_EMB_ALERT)
+        self._vocab_warning  = th.get("vocab_warning",  dcfg.vocab_warning_threshold)
+        self._vocab_alert    = th.get("vocab_alert",    dcfg.vocab_alert_threshold)
+        self._vol_warning    = th.get("volume_warning", dcfg.volume_warning_pct)
+        self._vol_alert      = th.get("volume_alert",   dcfg.volume_alert_pct)
+        self._emb_warning    = th.get("emb_warning",    dcfg.embedding_warning_dist)
+        self._emb_alert      = th.get("emb_alert",      dcfg.embedding_alert_dist)
 
     # ── Public API ──────────────────────────────────────────────────────────
 

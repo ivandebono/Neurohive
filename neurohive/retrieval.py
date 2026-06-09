@@ -44,23 +44,21 @@ from neurohive.knowledge_base import KnowledgeBase
 from neurohive.entities import Node, PaperChunk
 
 def _default_model_dir() -> Path:
-    """
-    Derive the default embedding model directory from config.toml.
-    """
+    """Derive the default embedding model directory from config.toml."""
     from neurohive.config import load_config  # noqa: PLC0415
     cfg = load_config()
     repo_root = Path(__file__).parent.parent
-    models_dir = Path(cfg["paths"]["models_dir"])
+    models_dir = Path(cfg.paths.models_dir)
     if not models_dir.is_absolute():
         models_dir = repo_root / models_dir
-    model_name = cfg["embeddings"]["model"].split("/")[-1]
+    model_name = cfg.embeddings.model.split("/")[-1]
     return models_dir / model_name
 
 
-def _retrieval_config() -> dict:
-    """Return retrieval settings from config.toml with config.py fallbacks."""
+def _retrieval_config():
+    """Return the RetrievalConfig from config.toml."""
     from neurohive.config import load_config  # noqa: PLC0415
-    return load_config()["retrieval"]
+    return load_config().retrieval
 
 
 def _tokenize(text: str) -> list[str]:
@@ -191,18 +189,18 @@ class Retriever:
         self.kb = kb
         self._cache_dir = Path(cache_dir) if cache_dir else None
         cfg = _retrieval_config()
-        self._bm25_k1 = float(cfg["bm25_k1"])
-        self._bm25_b = float(cfg["bm25_b"])
-        self._node_rrf_k = int(cfg["node_rrf_k"])
-        self._chunk_rrf_k = int(cfg["chunk_rrf_k"])
-        self._sibling_discount = float(cfg["sibling_discount"])
-        self._bm25_cache_version = int(cfg["bm25_cache_version"])
-        self._bm25_meta_file = str(cfg["bm25_meta_file"])
-        self._node_bm25_file = str(cfg["node_bm25_file"])
-        self._chunk_bm25_file = str(cfg["chunk_bm25_file"])
-        self._emb_meta_file = str(cfg["emb_meta_file"])
-        self._node_emb_file = str(cfg["node_emb_file"])
-        self._chunk_emb_file = str(cfg["chunk_emb_file"])
+        self._bm25_k1 = cfg.bm25_k1
+        self._bm25_b = cfg.bm25_b
+        self._node_rrf_k = cfg.node_rrf_k
+        self._chunk_rrf_k = cfg.chunk_rrf_k
+        self._sibling_discount = cfg.sibling_discount
+        self._bm25_cache_version = cfg.bm25_cache_version
+        self._bm25_meta_file = cfg.bm25_meta_file
+        self._node_bm25_file = cfg.node_bm25_file
+        self._chunk_bm25_file = cfg.chunk_bm25_file
+        self._emb_meta_file = cfg.emb_meta_file
+        self._node_emb_file = cfg.node_emb_file
+        self._chunk_emb_file = cfg.chunk_emb_file
 
         # Node document = name + type + description + all edge notes attached to
         # that node (outgoing and incoming).  Including notes means queries that
