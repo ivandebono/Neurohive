@@ -178,16 +178,17 @@ class TestFormatTaxonomyContext:
         ctx = pipeline._format_taxonomy_context([th, ra])
         assert "[inferred]" in ctx
 
-    def test_hidden_edges_count_shown(self, pipeline):
-        # Render only P001 without its neighbours — should show "further connections"
+    def test_out_of_context_edges_omitted(self, pipeline):
+        # Render only P001 without its neighbours — out-of-context edges are simply
+        # omitted; no "further connections" noise should appear.
         p001 = pipeline.kb.nodes_by_id["P001"]
         ctx = pipeline._format_taxonomy_context([p001])
-        assert "further connection" in ctx
+        assert "further connection" not in ctx
 
 
 class TestRetrieveAndExpand:
     def test_chunk_taxonomy_links_seed_graph_expansion(self, pipeline):
-        nodes, chunks = pipeline._retrieve_and_expand("channel kinetics mathematically")
+        nodes, chunks, _, _ = pipeline._retrieve_and_expand("channel kinetics mathematically")
         node_ids = {n.id for n in nodes}
         chunk_node_ids = {
             nid

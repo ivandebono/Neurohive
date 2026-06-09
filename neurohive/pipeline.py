@@ -262,7 +262,9 @@ class QueryPipeline:
     # Step 1 + 2: retrieve & expand
     # ------------------------------------------------------------------
 
-    def _retrieve_and_expand(self, query: str) -> tuple[list[Node], list[PaperChunk]]:
+    def _retrieve_and_expand(
+        self, query: str
+    ) -> tuple[list[Node], list[PaperChunk], set[str], dict[int, float]]:
         # Fetch a larger candidate pool when re-ranking is enabled.
         chunk_fetch_k = self.chunk_top_k * self._rerank_pool if self._rerank else self.chunk_top_k
         top_nodes_scored, top_chunks_scored = self.retriever.retrieve(
@@ -271,7 +273,10 @@ class QueryPipeline:
             chunk_fetch_k,
         )
 
-        seed_ids = {n.id for n, _ in top_nodes_scored}
+        retrieved_node_ids: set[str] = {n.id for n, _ in top_nodes_scored}
+        chunk_scores: dict[int, float] = {c.id: score for c, score in top_chunks_scored}
+
+        seed_ids = set(retrieved_node_ids)
         seed_ids.update(
             nid
             for chunk, _ in top_chunks_scored
@@ -288,21 +293,26 @@ class QueryPipeline:
         if self._rerank:
             all_chunks = self._rerank_chunks(query, all_chunks, self.chunk_top_k)
 
-        return all_nodes, all_chunks
+        return all_nodes, all_chunks, retrieved_node_ids, chunk_scores
 
     # ------------------------------------------------------------------
     # Step 3: format context
     # ------------------------------------------------------------------
 
-    def _format_taxonomy_context(self, nodes: list[Node]) -> str:
+    def _format_taxonomy_context(
+        self, nodes: list[Node], retrieved_node_ids: set[str] | None = None
+    ) -> str:
         node_set = {n.id for n in nodes}
         lines: list[str] = []
         order = {"Pillar": 0, "Subpillar": 1, "Research_area": 2, "Theory": 3, "Dimension": 4}
         for node in sorted(nodes, key=lambda n: order.get(n.type, 5)):
             breadcrumb = self.kb.breadcrumb(node.id)
-            lines.append(f"[{node.type}] {breadcrumb}")
+            if retrieved_node_ids is not None:
+                tag = "  [direct]" if node.id in retrieved_node_ids else "  [expanded]"
+            else:
+                tag = ""
+            lines.append(f"[{node.type}] {breadcrumb}{tag}")
             lines.append(f"  {node.description}")
-            hidden = 0
             for edge in self.kb.outgoing.get(node.id, []):
                 if edge.to_id in node_set:
                     target = self.kb.nodes_by_id[edge.to_id]
@@ -313,23 +323,29 @@ class QueryPipeline:
                     lines.append(f"  {label} → {target.name.replace('_', ' ')}{conf}{inferred}")
                     if edge.notes.strip():
                         lines.append(f"    ({edge.notes})")
-                else:
-                    hidden += 1
-            if hidden:
-                lines.append(f"  [+ {hidden} further connection{'s' if hidden > 1 else ''} not retrieved for this query]")
             if node.isolated:
                 lines.append("  [no connections]")
             lines.append("")
         return "\n".join(lines)
 
     @staticmethod
-    def _format_paper_context(chunks: list[PaperChunk], kb: KnowledgeBase) -> str:
+    def _format_paper_context(
+        chunks: list[PaperChunk],
+        kb: KnowledgeBase,
+        chunk_scores: dict[int, float] | None = None,
+    ) -> str:
         by_doi: dict[str, list[PaperChunk]] = defaultdict(list)
+        doi_score: dict[str, float] = {}
         for chunk in chunks:
             by_doi[chunk.doi].append(chunk)
+            score = chunk_scores.get(chunk.id, 0.0) if chunk_scores else 0.0
+            doi_score[chunk.doi] = max(doi_score.get(chunk.doi, 0.0), score)
+
+        sorted_dois = sorted(by_doi, key=lambda d: doi_score[d], reverse=True)
+
         lines: list[str] = []
-        for doi, doi_chunks in by_doi.items():
-            doi_chunks.sort(key=lambda c: c.chunk_index)
+        for doi in sorted_dois:
+            doi_chunks = sorted(by_doi[doi], key=lambda c: c.chunk_index)
             first = doi_chunks[0]
             lines.append(f"[{first.citation}] \"{first.title}\" DOI:{doi}")
             linked_names = sorted({
@@ -349,9 +365,16 @@ class QueryPipeline:
     # Step 4: generate
     # ------------------------------------------------------------------
 
-    def _generate(self, query: str, nodes: list[Node], chunks: list[PaperChunk]) -> dict:
-        taxonomy_ctx = self._format_taxonomy_context(nodes)
-        paper_ctx = self._format_paper_context(chunks, self.kb)
+    def _generate(
+        self,
+        query: str,
+        nodes: list[Node],
+        chunks: list[PaperChunk],
+        retrieved_node_ids: set[str] | None = None,
+        chunk_scores: dict[int, float] | None = None,
+    ) -> dict:
+        taxonomy_ctx = self._format_taxonomy_context(nodes, retrieved_node_ids)
+        paper_ctx = self._format_paper_context(chunks, self.kb, chunk_scores)
         return self._backend.generate(query, taxonomy_ctx, paper_ctx)
 
     # ------------------------------------------------------------------
@@ -599,11 +622,12 @@ class QueryPipeline:
                 )
 
         # ── Full pipeline ──────────────────────────────────────────────
-        nodes, chunks = self._retrieve_and_expand(query)
-        structured = self._generate(query, nodes, chunks)
+        nodes, chunks, retrieved_node_ids, chunk_scores = self._retrieve_and_expand(query)
+        structured = self._generate(query, nodes, chunks, retrieved_node_ids, chunk_scores)
 
         if debug:
-            print(f"[debug] full structured output: {structured}")
+            if reasoning := structured.get("reasoning"):
+                print(f"[debug] model reasoning: {reasoning}")
             raw = structured.get("answer", [])
             n = len(raw) if isinstance(raw, list) else f"non-list ({type(raw).__name__})"
             print(f"[debug] raw model output: {n} triple(s)")

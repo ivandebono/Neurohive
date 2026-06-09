@@ -32,7 +32,7 @@ def test_ollama_backend_parses_structured_json(monkeypatch):
         })
         return _FakeResponse({"message": {"content": content}})
 
-    monkeypatch.setattr("neurohive.backends.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("neurohive.backends.ollama.request.urlopen", fake_urlopen)
 
     backend = OllamaBackend(model="test-model", host="http://localhost:11434")
     result = backend.generate("q", "taxonomy", "paper")
@@ -46,7 +46,7 @@ def test_ollama_backend_returns_error_triple_on_failure(monkeypatch):
     def fake_urlopen(req, timeout):
         raise OSError("connection refused")
 
-    monkeypatch.setattr("neurohive.backends.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("neurohive.backends.ollama.request.urlopen", fake_urlopen)
 
     backend = OllamaBackend(model="test-model", host="http://localhost:11434")
     result = backend.generate("q", "taxonomy", "paper")
